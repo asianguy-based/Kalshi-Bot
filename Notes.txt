@@ -1,0 +1,35 @@
+Scan multiple markets for price discrepancies automatically; 
+How to calculate arbitrage between two Kalshi markets; 
+Set up a bot to monitor series for arbitrage signals; 
+Set up a bot to make (start with a button) automated profitable orders based on STRATEGY CONFIG (with safeguards);
+Track wins/losses in real time with an option for the user to input a starting dollar amount;
+
+Which endpoints return real time orderbook and trades
+
+Check which logging level is configured in the Flask app
+
+Show the code that writes events to the log buffer
+
+Verify the endpoint URL the frontend calls to fetch logs
+
+Inspect browser console for network errors when polling logs
+
+Confirm the since_id parameter is being sent by the client
+
+Design strategy config parameters for Kalshi arbitrage bot
+
+How to detect cross market price discrepancies programmatically
+
+Example Python code to monitor a series for arbitrage signals
+
+Calculate expected profit and fees for a two market arbitrage trade
+
+Implement safeguards and circuit breakers for automated orders
+
+
+
+
+url = https://api.elections.kalshi.com/trade-api/v2
+/trade-api/v2/portfolio/positions - Get your positions
+/trade-api/v2/portfolio/orders - View your orders
+/trade-api/v2/markets - Browse available markets
