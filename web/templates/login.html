@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kalshi Bot // Login</title>
+    <style>
+        :root { --primary: #ffffff; --bg: #000000; }
+        body { background: var(--bg); color: var(--primary); display: flex; justify-content: center; align-items: center; height: 100vh; font-family: monospace; overflow: hidden;}
+        .card { width: 350px; text-align: center; position: relative; z-index: 10; }
+        input { width: 100%; background: transparent; border: none; border-bottom: 1px solid #333; color: white; padding: 10px; margin-bottom: 20px; outline: none; font-family: inherit; }
+        input:focus { border-bottom-color: white; }
+        button { width: 100%; padding: 15px; background: white; border: none; font-weight: bold; cursor: pointer; }
+        #cursor-glow { position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 60%); pointer-events: none; transform: translate(-50%, -50%); transition: 0.1s; }
+    </style>
+</head>
+<body>
+    <div id="cursor-glow"></div>
+    <div class="card">
+        <h1 style="font-size: 2rem; letter-spacing: 4px; margin-bottom: 3rem;">KALSHI // NODE</h1>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="OPERATOR" required>
+            <input type="password" id="password" placeholder="KEY" required>
+            <button type="submit" id="btn">ENTER TERMINAL</button>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('mousemove', e => {
+            const glow = document.getElementById('cursor-glow');
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+        });
+        document.getElementById('loginForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const btn = document.getElementById('btn');
+            btn.innerText = "AUTHENTICATING...";
+            
+            const res = await fetch('/', {
+                method:'POST', 
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({username:u, password:p})
+            });
+            const data = await res.json();
+            if(data.status === 'success') window.location.href = data.redirect;
+            else { alert('ACCESS DENIED'); btn.innerText = "ENTER TERMINAL"; }
+        });
+    </script>
+</body>
+</html>

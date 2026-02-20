@@ -1,0 +1,7 @@
+Flask
+Flask-Login
+Flask-Bcrypt
+gunicorn
+cryptography
+requests
+python-dateutil
