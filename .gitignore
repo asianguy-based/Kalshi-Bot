@@ -1,0 +1,13 @@
+# Secrets — never commit
+API
+API.txt
+*.pem
+*.key
+.env
+.env.*
+secrets/
+# Runtime data
+*.db
+bot_data.db
+__pycache__/
+*.pyc

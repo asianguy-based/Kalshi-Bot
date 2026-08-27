@@ -2,48 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Kalshi Bot // Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>KALSHI // NODE</title>
     <style>
         :root { --primary: #ffffff; --bg: #000000; }
-        body { background: var(--bg); color: var(--primary); display: flex; justify-content: center; align-items: center; height: 100vh; font-family: monospace; overflow: hidden;}
-        .card { width: 350px; text-align: center; position: relative; z-index: 10; }
-        input { width: 100%; background: transparent; border: none; border-bottom: 1px solid #333; color: white; padding: 10px; margin-bottom: 20px; outline: none; font-family: inherit; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--primary); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; }
+        .card { width: 340px; text-align: center; position: relative; z-index: 10; }
+        h1 { font-size: 1.75rem; letter-spacing: 6px; margin: 0 0 3rem; font-weight: 400; }
+        input { width: 100%; background: transparent; border: none; border-bottom: 1px solid #333; color: white; padding: 12px 4px; margin-bottom: 24px; outline: none; font-family: inherit; font-size: 1rem; letter-spacing: 2px; text-align: center; }
         input:focus { border-bottom-color: white; }
-        button { width: 100%; padding: 15px; background: white; border: none; font-weight: bold; cursor: pointer; }
-        #cursor-glow { position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 60%); pointer-events: none; transform: translate(-50%, -50%); transition: 0.1s; }
+        button { width: 100%; padding: 15px; background: white; color: black; border: none; font-weight: bold; cursor: pointer; font-family: inherit; letter-spacing: 2px; }
+        button:disabled { opacity: .4; cursor: wait; }
+        #msg { min-height: 1.2em; margin-top: 18px; font-size: .8rem; color: #ff4444; letter-spacing: 1px; }
+        #cursor-glow { position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 60%); pointer-events: none; transform: translate(-50%, -50%); transition: .1s; }
     </style>
 </head>
 <body>
     <div id="cursor-glow"></div>
     <div class="card">
-        <h1 style="font-size: 2rem; letter-spacing: 4px; margin-bottom: 3rem;">KALSHI // NODE</h1>
-        <form id="loginForm">
-            <input type="text" id="username" placeholder="OPERATOR" required>
-            <input type="password" id="password" placeholder="KEY" required>
-            <button type="submit" id="btn">ENTER TERMINAL</button>
+        <h1>KALSHI // NODE</h1>
+        <form id="loginForm" autocomplete="off">
+            <input type="password" id="passphrase" placeholder="KEY" required autofocus
+                   autocomplete="current-password" maxlength="256">
+            <button type="submit" id="btn">ENTER</button>
         </form>
+        <div id="msg"></div>
     </div>
     <script>
         document.addEventListener('mousemove', e => {
-            const glow = document.getElementById('cursor-glow');
-            glow.style.left = e.clientX + 'px';
-            glow.style.top = e.clientY + 'px';
+            const g = document.getElementById('cursor-glow');
+            g.style.left = e.clientX + 'px';
+            g.style.top = e.clientY + 'px';
         });
-        document.getElementById('loginForm').addEventListener('submit', async e => {
+
+        const form = document.getElementById('loginForm');
+        const btn = document.getElementById('btn');
+        const msg = document.getElementById('msg');
+
+        form.addEventListener('submit', async e => {
             e.preventDefault();
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            const btn = document.getElementById('btn');
-            btn.innerText = "AUTHENTICATING...";
-            
-            const res = await fetch('/', {
-                method:'POST', 
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({username:u, password:p})
-            });
-            const data = await res.json();
-            if(data.status === 'success') window.location.href = data.redirect;
-            else { alert('ACCESS DENIED'); btn.innerText = "ENTER TERMINAL"; }
+            const input = document.getElementById('passphrase');
+            msg.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'AUTHENTICATING';
+            try {
+                const res = await fetch('/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ passphrase: input.value })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.status === 'success') {
+                    window.location.href = data.redirect || '/dashboard';
+                    return;
+                }
+                msg.textContent = res.status === 429
+                    ? (data.message || 'TOO MANY ATTEMPTS. WAIT.')
+                    : 'ACCESS DENIED';
+            } catch (err) {
+                msg.textContent = 'CONNECTION ERROR';
+            }
+            input.value = '';
+            input.focus();
+            btn.disabled = false;
+            btn.textContent = 'ENTER';
         });
     </script>
 </body>

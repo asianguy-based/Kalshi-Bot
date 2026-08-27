@@ -1,404 +1,328 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Kalshi Arbitrage Terminal // V3.1</title>
-    <style>
-        :root { --bg-color: #050505; --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.1); --accent: #00ff88; --danger: #ff4444; --text-muted: rgba(255, 255, 255, 0.5); }
-        * { box-sizing: border-box; outline: none; }
-        body { background-color: var(--bg-color); color: white; font-family: 'JetBrains Mono', monospace; padding: 0; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        
-        /* Nav */
-        .nav { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.5rem; border-bottom: 1px solid var(--border); background: #000; height: 50px; flex-shrink: 0; }
-        .brand { font-size: 0.9rem; letter-spacing: 2px; font-weight: 700; color: var(--accent); }
-        .nav-tabs { display: flex; gap: 1rem; }
-        .tab-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; text-transform: uppercase; padding: 5px 10px; border-bottom: 2px solid transparent; transition: all 0.2s; font-family: inherit; }
-        .tab-btn.active { color: white; border-bottom-color: var(--accent); }
-        .tab-btn:hover { color: white; }
-        .nav-controls { display: flex; gap: 0.5rem; }
-        .nav-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; cursor: pointer; font-size: 0.6rem; text-transform: uppercase; transition: all 0.2s; }
-        .nav-btn:hover { border-color: white; color: white; }
-
-        /* Main Layout */
-        .main-content { flex: 1; position: relative; overflow: hidden; }
-        .tab-pane { display: none; height: 100%; padding: 1.5rem; overflow-y: auto; padding-bottom: 80px; }
-        .tab-pane.active { display: block; }
-
-        /* Grid System */
-        .grid { display: grid; grid-template-columns: 320px 1fr; gap: 1rem; height: 100%; }
-        .col-full { display: flex; flex-direction: column; gap: 1rem; height: 100%; overflow: hidden; }
-        
-        /* Panels */
-        .panel { background: var(--glass); border: 1px solid var(--border); padding: 1.2rem; border-radius: 4px; display: flex; flex-direction: column; }
-        h2 { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; margin: 0 0 1rem 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-        .risk-link { font-size: 0.6rem; color: var(--text-muted); text-decoration: underline; cursor: pointer; text-transform: none; letter-spacing: 0; }
-        .risk-link:hover { color: white; }
-
-        /* --- RADAR (RESTORED) --- */
-        .radar-container { width: 120px; height: 120px; margin: 0 auto 10px auto; position: relative; border-radius: 50%; border: 1px solid rgba(0, 255, 136, 0.2); background: radial-gradient(circle, rgba(0, 255, 136, 0.05) 0%, rgba(0,0,0,0) 70%); display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .radar-scan { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0%, rgba(0, 255, 136, 0.3) 100%); animation: radar-spin 2s linear infinite; opacity: 0; }
-        .radar-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); opacity: 0.5; }
-        .radar-container.active .radar-scan { opacity: 1; }
-        .radar-container.active { border-color: rgba(0, 255, 136, 0.5); }
-        .radar-container.active .radar-dot { opacity: 1; box-shadow: 0 0 15px var(--accent); }
-        @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* --- ARB CARDS --- */
-        .arb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .arb-card { background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.6) 100%); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 1rem; border-radius: 4px; position: relative; transition: all 0.2s; }
-        .arb-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .arb-header { font-size: 0.8rem; color: #fff; margin-bottom: 0.5rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .arb-stats { display: flex; justify-content: space-between; font-size: 0.7rem; color: #aaa; margin-bottom: 0.8rem; }
-        .arb-roi { font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 0.5rem; }
-        .arb-calc { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-size: 0.7rem; display: flex; justify-content: space-between; align-items: center; color: #ccc; }
-        
-        /* --- TRENDING / WHALE LISTS --- */
-        .split-view { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; min-height: 300px; }
-        .list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.75rem; align-items: center; }
-        .list-item:hover { background: rgba(255,255,255,0.02); }
-        .trend-up { color: var(--accent); } .trend-down { color: var(--danger); }
-        .whale-badge { background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 2px 6px; border-radius: 2px; font-size: 0.6rem; border: 1px solid rgba(0, 255, 136, 0.3); }
-
-        /* --- MULTI-CALCULATOR BAR --- */
-        .calc-bar { background: #0a0a0a; border-top: 1px solid var(--border); padding: 0; display: flex; align-items: center; position: absolute; bottom: 0; left: 0; width: 100%; height: 50px; z-index: 100; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); white-space: nowrap; }
-        .calc-tabs { display: flex; height: 100%; border-right: 1px solid var(--border); background: #111; }
-        .calc-tab { padding: 0 15px; height: 100%; background: transparent; border: none; color: #666; font-size: 0.65rem; font-weight: bold; cursor: pointer; border-bottom: 2px solid transparent; transition: 0.2s; font-family: inherit; }
-        .calc-tab:hover { color: white; background: #1a1a1a; }
-        .calc-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: #151515; }
-        .calc-content { display: flex; align-items: center; padding-left: 15px; gap: 8px; flex: 1; overflow-x: auto; }
-        .calc-input { width: 70px; background: #222; border: 1px solid #444; color: white; padding: 5px; font-family: inherit; font-size: 0.75rem; text-align: center; border-radius: 4px; }
-        .calc-input:focus { border-color: var(--accent); }
-        .calc-label { font-size: 0.7rem; color: #888; }
-        .calc-result { font-size: 0.85rem; font-weight: bold; color: white; margin-left: 10px; }
-        .help-icon { color: #555; font-size: 0.8rem; cursor: pointer; text-decoration: none; margin-left: auto; margin-right: 20px; border: 1px solid #333; padding: 2px 6px; border-radius: 4px; }
-        .help-icon:hover { color: var(--accent); border-color: var(--accent); }
-
-        /* --- EXISTING STYLES --- */
-        .form-group { margin-bottom: 0.8rem; }
-        label { display: block; font-size: 0.6rem; color: var(--text-muted); margin-bottom: 0.3rem; }
-        input[type="text"], input[type="number"], textarea, input[type="password"] { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 8px; font-family: inherit; font-size: 0.75rem; }
-        .action-btn { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); color: white; font-weight: bold; cursor: pointer; font-size: 0.7rem; border-radius: 2px; text-transform: uppercase; transition: all 0.2s; margin-top: auto; }
-        .action-btn:hover { background: var(--glass); border-color: white; }
-        .action-btn.primary { border-color: var(--accent); color: var(--accent); }
-        .action-btn.primary:hover { background: var(--accent); color: black; }
-        .action-btn.stop { border-color: var(--danger); color: var(--danger); }
-        .action-btn.stop:hover { background: var(--danger); color: white; }
-        
-        /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal.active { display: flex; }
-        .modal-content { background: #111; border: 1px solid var(--border); padding: 2rem; width: 500px; border-radius: 8px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .close-modal { position: absolute; top: 1rem; right: 1rem; cursor: pointer; color: #888; font-size: 1.5rem; line-height: 1; }
-        
-        /* Market Table */
-        .market-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 0.8fr; padding: 8px; font-size: 0.7rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-weight: bold; background: rgba(255,255,255,0.02); }
-        .market-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 0.8fr; padding: 8px; font-size: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; transition: background 0.1s; }
-        .market-row:hover { background: rgba(255,255,255,0.05); }
-        .ticker-link { color: white; text-decoration: none; border-bottom: 1px dotted #555; }
-        .ticker-link:hover { color: var(--accent); border-color: var(--accent); }
-        .buy-btn { background: rgba(0, 255, 136, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 4px 10px; cursor: pointer; border-radius: 2px; font-size: 0.65rem; font-weight: bold; }
-        .buy-btn:hover { background: var(--accent); color: black; }
-        
-        /* Status Header */
-        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .status-dot-small { width: 8px; height: 8px; border-radius: 50%; background: #444; margin-right: 5px; display: inline-block; }
-        .status-dot-small.active { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
-
-        /* Logs */
-        #logBox { overflow-y: auto; font-size: 0.7rem; color: #aaa; font-family: 'Consolas', monospace; line-height: 1.4; height: 100%; padding: 5px; }
-        .log-time { color: #555; margin-right: 5px; }
-        .log-error { color: var(--danger); }
-        .log-success { color: var(--accent); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>KALSHI // NODE</title>
+<style>
+  :root { --bg:#000; --panel:#0b0b0b; --line:#222; --fg:#e8e8e8;
+          --dim:#777; --good:#3ddc84; --bad:#ff4d4d; --warn:#ffb020; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; }
+  header { display:flex; align-items:center; gap:16px; padding:14px 20px;
+           border-bottom:1px solid var(--line); position:sticky; top:0;
+           background:var(--bg); z-index:5; flex-wrap:wrap; }
+  h1 { font-size:1rem; letter-spacing:4px; margin:0; font-weight:400; }
+  .pill { padding:4px 10px; border:1px solid var(--line); border-radius:99px;
+          font-size:.72rem; letter-spacing:1px; }
+  .pill.run { border-color:var(--good); color:var(--good); }
+  .pill.idle { color:var(--dim); }
+  .pill.dry { border-color:var(--warn); color:var(--warn); }
+  .pill.live { border-color:var(--bad); color:var(--bad); }
+  .pill.halt { border-color:var(--bad); color:var(--bad); }
+  .spacer { flex:1; }
+  a.logout { color:var(--dim); text-decoration:none; font-size:.72rem;
+             letter-spacing:1px; }
+  main { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px; }
+  @media (max-width:1000px){ main { grid-template-columns:1fr; } }
+  section { background:var(--panel); border:1px solid var(--line); padding:14px; }
+  section.wide { grid-column:1 / -1; }
+  h2 { font-size:.74rem; letter-spacing:2px; color:var(--dim);
+       margin:0 0 12px; font-weight:400; text-transform:uppercase; }
+  label { display:block; color:var(--dim); font-size:.68rem;
+          letter-spacing:1px; margin:10px 0 4px; }
+  input, textarea, select { width:100%; background:#000; border:1px solid var(--line);
+          color:var(--fg); padding:8px; font-family:inherit; font-size:12px; }
+  input:focus, textarea:focus { outline:none; border-color:#555; }
+  textarea { min-height:70px; resize:vertical; }
+  button { background:var(--fg); color:#000; border:none; padding:10px 16px;
+           font-family:inherit; font-weight:bold; letter-spacing:1px;
+           cursor:pointer; font-size:12px; }
+  button.ghost { background:transparent; color:var(--fg);
+                 border:1px solid var(--line); }
+  button.danger { background:var(--bad); color:#fff; }
+  button:disabled { opacity:.35; cursor:not-allowed; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  pre#logs { background:#000; border:1px solid var(--line); height:280px;
+             overflow:auto; margin:0; padding:10px; font-size:11.5px;
+             line-height:1.55; white-space:pre-wrap; }
+  table { width:100%; border-collapse:collapse; font-size:11.5px; }
+  th { text-align:left; color:var(--dim); font-weight:400; padding:6px 8px;
+       border-bottom:1px solid var(--line); letter-spacing:1px; }
+  td { padding:6px 8px; border-bottom:1px solid #141414; vertical-align:top; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pos { color:var(--good); } .neg { color:var(--bad); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+           gap:10px; }
+  .stat { border:1px solid var(--line); padding:10px; }
+  .stat b { display:block; font-size:1.15rem; font-weight:500; margin-bottom:3px; }
+  .stat span { color:var(--dim); font-size:.64rem; letter-spacing:1px; }
+  .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+           background:#fff; color:#000; padding:10px 18px; font-weight:bold;
+           font-size:12px; display:none; z-index:50; max-width:80vw; }
+  .banner { grid-column:1 / -1; border:1px solid var(--bad); color:var(--bad);
+            padding:12px; display:none; }
+  .muted { color:var(--dim); }
+</style>
 </head>
 <body>
+<header>
+  <h1>KALSHI // NODE</h1>
+  <span class="pill idle" id="pState">IDLE</span>
+  <span class="pill dry" id="pMode">DRY RUN</span>
+  <span class="pill idle" id="pCreds">NO CREDS</span>
+  <span class="pill halt" id="pHalt" style="display:none">HALTED</span>
+  <div class="spacer"></div>
+  <a class="logout" href="/logout">LOG OUT</a>
+</header>
 
-    <!-- NAV -->
-    <div class="nav">
-        <div class="brand">KALSHI // ALPHA_NODE</div>
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-scanner')">Live Scanner</button>
-            <button class="tab-btn" onclick="switchTab('tab-intel')">Alpha Intel</button>
-        </div>
-        <div class="nav-controls">
-            <button class="nav-btn" onclick="openModal('modal-creds')">Keys</button>
-            <a href="/logout"><button class="nav-btn" style="border-color:var(--danger); color:var(--danger)">Exit</button></a>
-        </div>
+<main>
+  <div class="banner" id="banner"></div>
+
+  <section class="wide">
+    <h2>Position &amp; P/L</h2>
+    <div class="stats" id="stats"></div>
+    <div class="row">
+      <button id="bStart">START ENGINE</button>
+      <button class="ghost" id="bStop">STOP</button>
+      <button class="ghost" id="bVerify">VERIFY KALSHI KEY</button>
+      <button class="danger" id="bResume" style="display:none">RESET BREAKER</button>
     </div>
+  </section>
 
-    <div class="main-content">
-        
-        <!-- TAB 1: LIVE SCANNER -->
-        <div id="tab-scanner" class="tab-pane active">
-            <div class="grid">
-                <!-- Left Sidebar -->
-                <div class="col-full" style="width: 300px; flex-shrink: 0;">
-                    <div class="panel">
-                        <h2>Bot Config <span class="risk-link" onclick="openModal('modal-risk')">Recommended Settings</span></h2>
-                        <div class="form-group"><label>Keywords</label><input type="text" id="market_keywords" placeholder="NBA, Fed"></div>
-                        <div class="form-group"><label>Min Profit %</label><input type="number" id="min_profit_pct" placeholder="1.5" step="0.1"></div>
-                        <div class="form-group"><label>Max Bet $</label><input type="number" id="max_bet_amount" placeholder="100"></div>
-                        <div style="display:flex; justify-content:space-between; margin:15px 0 10px 0; align-items:center;">
-                             <span style="font-size:0.7rem; color:#aaa; font-weight:bold;">DRY RUN MODE</span>
-                             <input type="checkbox" id="dry_run_mode" style="width:auto;">
-                        </div>
-                        <button class="action-btn primary" onclick="saveStrategy()">Update Strategy</button>
-                    </div>
-                    
-                    <!-- RESTORED RADAR PANEL -->
-                    <div class="panel" style="flex-grow:0; padding-bottom: 0;">
-                        <div class="status-header">
-                            <h2>System Status</h2>
-                            <div><span id="dot" class="status-dot-small"></span> <span id="statusLabel" style="font-size: 0.7rem; color: #666;">OFFLINE</span></div>
-                        </div>
-                        <div id="radar" class="radar-container"><div class="radar-scan"></div><div class="radar-dot"></div></div>
-                        <div id="statusText" style="text-align: center; font-size: 0.6rem; color: #666; margin-bottom: 10px;">WAITING FOR COMMAND</div>
-                        <button id="actionBtn" class="action-btn" style="margin-bottom: 1.2rem;" onclick="toggleBot()">INITIALIZE SYSTEM</button>
-                    </div>
-                </div>
+  <section>
+    <h2>Credentials</h2>
+    <p class="muted" style="margin-top:0">Stored encrypted. Never written to
+      disk in plaintext, never returned by the API.</p>
+    <label>KALSHI KEY ID</label>
+    <input id="kalshi_key_id" placeholder="uuid" autocomplete="off">
+    <label>KALSHI PRIVATE KEY (PEM)</label>
+    <textarea id="kalshi_private_key" placeholder="-----BEGIN RSA PRIVATE KEY-----"
+              autocomplete="off"></textarea>
+    <div class="row"><button id="bSaveCreds">SAVE CREDENTIALS</button></div>
+  </section>
 
-                <!-- Right Content -->
-                <div class="col-full" style="flex:1;">
-                    <div class="panel" style="flex:2; padding:0; overflow:hidden;">
-                        <h2 style="margin: 1.2rem 1.2rem 0.5rem 1.2rem;">Live Opportunities</h2>
-                        <div class="market-header" style="margin: 0 1.2rem;">
-                            <div>MARKET</div><div style="text-align:right">YES</div><div style="text-align:right">NO</div><div style="text-align:right">ROI</div><div style="text-align:center">ACT</div>
-                        </div>
-                        <div id="marketList" style="overflow-y:auto; flex:1; padding: 0 1.2rem 1.2rem 1.2rem;">
-                            <div style="text-align:center; padding:20px; color:#444;">Waiting for scan results...</div>
-                        </div>
-                    </div>
-                    <div class="panel" style="flex:1; min-height: 150px; max-height: 250px;">
-                        <h2>System Logs</h2>
-                        <div id="logBox"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 2: ALPHA INTEL -->
-        <div id="tab-intel" class="tab-pane">
-            <h2 style="margin-bottom: 1rem; color: #fff;">🔥 Top Arbitrage Opportunities (Live)</h2>
-            <div class="arb-grid" id="arbCards">
-                <div style="grid-column: 1/-1; text-align: center; color: #444; padding: 30px; border: 1px dashed #333; border-radius: 4px;">
-                    Scanner must be running to populate Arbitrage Cards.
-                </div>
-            </div>
-            <div class="split-view">
-                <div class="panel">
-                    <h2>📈 Market Movers (Vol > 20%)</h2>
-                    <div id="trendingList">
-                        <div class="list-item"><span>NBA: Lakers vs Warriors</span><span class="trend-up">+24% Vol</span></div>
-                        <div class="list-item"><span>Fed Rate Cut March</span><span class="trend-up">+18% Vol</span></div>
-                    </div>
-                </div>
-                <div class="panel">
-                    <h2>🐋 Whale Watch (> $5k)</h2>
-                    <div id="whaleList">
-                        <div class="list-item">
-                            <div><div style="color:white; font-weight:bold;">INFLATION-DEC-0.3</div><span style="color:#666;">Bought Yes @ 88c</span></div>
-                            <span class="whale-badge">$12,400</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div style="height: 60px;"></div>
-        </div>
-        
-        <!-- MULTI-CALCULATOR BAR -->
-        <div class="calc-bar">
-            <div class="calc-tabs">
-                <button class="calc-tab active" onclick="loadCalc('parlay')">PARLAY</button>
-                <button class="calc-tab" onclick="loadCalc('odds')">ODDS</button>
-                <button class="calc-tab" onclick="loadCalc('ev')">EV</button>
-                <button class="calc-tab" onclick="loadCalc('novig')">NO-VIG</button>
-                <button class="calc-tab" onclick="loadCalc('vig')">VIG</button>
-            </div>
-            <div class="calc-content" id="calcContent">
-                <!-- Injected via JS -->
-            </div>
-            <a href="#" class="help-icon" onclick="openHelp()">? Help</a>
-        </div>
-
+  <section>
+    <h2>Strategy &amp; Risk</h2>
+    <label>MARKET KEYWORDS (comma separated)</label>
+    <input id="market_keywords" placeholder="nba, fed, rain">
+    <label>EVENT ALLOWLIST — mutually exclusive events only</label>
+    <input id="event_allowlist" placeholder="KXNBAGAME-25DEC25">
+    <div class="grid2">
+      <div><label>MIN PROFIT %</label><input id="min_profit_pct"></div>
+      <div><label>MIN LIQUIDITY (contracts)</label><input id="min_liquidity"></div>
+      <div><label>MAX BET ($)</label><input id="max_bet_amount"></div>
+      <div><label>MAX EXPOSURE ($)</label><input id="max_exposure"></div>
+      <div><label>DAILY LOSS LIMIT ($)</label><input id="daily_loss_limit"></div>
+      <div><label>MAX ORDERS / DAY</label><input id="max_orders_per_day"></div>
+      <div><label>POLL INTERVAL (s)</label><input id="poll_interval"></div>
+      <div><label>MODE</label>
+        <select id="dry_run_mode">
+          <option value="true">DRY RUN (no real orders)</option>
+          <option value="false">LIVE TRADING</option>
+        </select>
+      </div>
     </div>
+    <div class="row"><button id="bSaveCfg">SAVE SETTINGS</button></div>
+  </section>
 
-    <!-- Modals -->
-    <div id="modal-creds" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-creds').classList.remove('active')">×</span>
-            <h2>API Config</h2>
-            <div class="form-group"><label>Key ID</label><input type="text" id="kalshi_key_id" placeholder="Saved (Hidden)"></div>
-            <div class="form-group"><label>Private Key</label><textarea id="kalshi_private_key" rows="8" placeholder="Saved (Hidden)"></textarea></div>
-            <button class="action-btn primary" onclick="saveCreds()">Encrypt & Save</button>
-        </div>
-    </div>
+  <section class="wide">
+    <h2>Detected Opportunities — profit is net of Kalshi fees</h2>
+    <table>
+      <thead><tr>
+        <th>KIND</th><th>EVENT</th><th>LEGS</th>
+        <th class="num">QTY</th><th class="num">COST</th><th class="num">FEES</th>
+        <th class="num">NET</th><th class="num">%</th><th></th>
+      </tr></thead>
+      <tbody id="opps"><tr><td colspan="9" class="muted">No scan yet.</td></tr></tbody>
+    </table>
+  </section>
 
-    <div id="modal-risk" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-risk').classList.remove('active')">×</span>
-            <h2 style="color:var(--accent);">Risk Management</h2>
-            <p style="font-size: 0.8rem; color: #ccc;">Conservative settings for arbitrage:</p>
-            <ul style="font-size:0.75rem; color:#aaa; line-height:1.6;">
-                <li><strong>Min Profit:</strong> 1.5% (Covers fees)</li>
-                <li><strong>Min Liquidity:</strong> $1,000+ (Exit safety)</li>
-                <li><strong>Max Bet:</strong> $100 (Variance control)</li>
-            </ul>
-        </div>
-    </div>
+  <section>
+    <h2>Engine Log</h2>
+    <pre id="logs">waiting...</pre>
+  </section>
 
-    <div id="modal-help" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('modal-help').classList.remove('active')">×</span>
-            <h2 style="color:var(--accent);" id="helpTitle">Calculator Help</h2>
-            <p style="font-size: 0.8rem; color: #ccc; line-height: 1.5;" id="helpText">...</p>
-        </div>
-    </div>
+  <section>
+    <h2>Trade History</h2>
+    <table>
+      <thead><tr><th>TIME</th><th>EVENT</th><th class="num">QTY</th>
+        <th class="num">EXP. NET</th><th>STATUS</th></tr></thead>
+      <tbody id="trades"><tr><td colspan="5" class="muted">None.</td></tr></tbody>
+    </table>
+  </section>
+</main>
 
-    <script>
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        
-        // --- TABS LOGIC ---
-        function switchTab(id) {
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            const btns = document.querySelectorAll('.tab-btn');
-            if(id === 'tab-scanner') btns[0].classList.add('active'); else btns[1].classList.add('active');
-        }
+<div class="toast" id="toast"></div>
 
-        // --- CALCULATOR ENGINE ---
-        let currentCalc = 'parlay';
-        
-        const CALC_VIEWS = {
-            parlay: `
-                <input type="number" class="calc-input" placeholder="Price 1" id="c1" oninput="runCalc()">
-                <span class="calc-label">x</span>
-                <input type="number" class="calc-input" placeholder="Price 2" id="c2" oninput="runCalc()">
-                <span class="calc-label">x</span>
-                <input type="number" class="calc-input" placeholder="Price 3" id="c3" oninput="runCalc()">
-                <span class="calc-result" id="cRes">= 0.00x Payout</span>
-            `,
-            odds: `
-                <input type="number" class="calc-input" placeholder="Cents" id="c1" oninput="runCalc()">
-                <span class="calc-label">OR</span>
-                <input type="text" class="calc-input" placeholder="Am. Odds" id="c2" oninput="runCalc(true)">
-                <span class="calc-result" id="cRes">Prob: - | Odds: -</span>
-            `,
-            ev: `
-                <span class="calc-label">Wager:</span>
-                <input type="number" class="calc-input" placeholder="$100" id="c1" oninput="runCalc()">
-                <span class="calc-label">Prob(%):</span>
-                <input type="number" class="calc-input" placeholder="55" id="c2" oninput="runCalc()">
-                <span class="calc-label">Odds:</span>
-                <input type="text" class="calc-input" placeholder="+100" id="c3" oninput="runCalc()">
-                <span class="calc-result" id="cRes">EV: $0.00</span>
-            `,
-            novig: `
-                <input type="text" class="calc-input" placeholder="Odds 1" id="c1" oninput="runCalc()">
-                <span class="calc-label">vs</span>
-                <input type="text" class="calc-input" placeholder="Odds 2" id="c2" oninput="runCalc()">
-                <span class="calc-result" id="cRes">Fair: -</span>
-            `,
-            vig: `
-                <input type="text" class="calc-input" placeholder="Odds 1" id="c1" oninput="runCalc()">
-                <span class="calc-label">vs</span>
-                <input type="text" class="calc-input" placeholder="Odds 2" id="c2" oninput="runCalc()">
-                <span class="calc-result" id="cRes">Vig: 0%</span>
-            `
-        };
+<script>
+const CSRF = "{{ csrf_token }}";
+const $ = id => document.getElementById(id);
 
-        const HELP_TEXTS = {
-            parlay: "Calculates the total payout multiplier for a parlay bet. Input the price (in cents) for each leg. The tool converts prices to probabilities and multiplies them.",
-            odds: "Converts between Prediction Market prices (cents), American Odds (+150), and Implied Probability (%). Enter one to see the others.",
-            ev: "Calculates Expected Value (EV). Enter your wager size, your estimated probability of winning, and the sportsbook odds. Positive EV means a profitable long-term bet.",
-            novig: "Removes the sportsbook fee (vig) to find the 'Fair Odds'. Enter the odds for both sides of a bet (e.g. -110 / -110) to see the true probability.",
-            vig: "Calculates the total 'Juice' or 'Vig' charged by a sportsbook on a market. Higher vig means worse pricing for the bettor."
-        };
+function toast(msg, ms = 3200) {
+  const t = $('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms);
+}
 
-        function loadCalc(type) {
-            currentCalc = type;
-            document.getElementById('calcContent').innerHTML = CALC_VIEWS[type];
-            document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            runCalc(); // Clear/Reset
-        }
+async function api(path, method = 'GET', body) {
+  const opts = { method, headers: { 'X-CSRF-Token': CSRF } };
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(path, opts);
+  if (res.status === 401) { window.location.href = '/'; return null; }
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, data };
+}
 
-        function openHelp() {
-            document.getElementById('helpTitle').innerText = currentCalc.toUpperCase() + " HELP";
-            document.getElementById('helpText').innerText = HELP_TEXTS[currentCalc];
-            openModal('modal-help');
-        }
+const CFG_FIELDS = ['market_keywords','event_allowlist','min_profit_pct',
+  'min_liquidity','max_bet_amount','max_exposure','daily_loss_limit',
+  'max_orders_per_day','poll_interval','dry_run_mode'];
 
-        function runCalc(reverse = false) {
-            const resEl = document.getElementById('cRes');
-            const v1 = document.getElementById('c1').value;
-            const v2 = document.getElementById('c2').value;
-            const v3 = document.getElementById('c3') ? document.getElementById('c3').value : null;
+async function loadConfig() {
+  const r = await api('/api/config');
+  if (!r || !r.ok) return;
+  CFG_FIELDS.forEach(k => { if (r.data[k] !== undefined) $(k).value = r.data[k]; });
+}
 
-            if(currentCalc === 'parlay') {
-                let prob = 1;
-                let active = 0;
-                [v1, v2, v3].forEach(v => { if(v) { prob *= (parseFloat(v)/100); active++; } });
-                if(active === 0) return resEl.innerText = "= 0.00x Payout";
-                resEl.innerText = `= ${(1/prob).toFixed(2)}x Payout`;
-            }
+function money(v) { return (v < 0 ? '-$' : '$') + Math.abs(v).toFixed(2); }
 
-            if(currentCalc === 'odds') {
-                if(!reverse && v1) { // Cents to Odds
-                    const prob = parseFloat(v1)/100;
-                    if(prob <= 0 || prob >= 1) return;
-                    let amOdds = prob > 0.5 ? Math.round(-100 * (prob / (1-prob))) : Math.round(100 * ((1-prob)/prob));
-                    resEl.innerText = `Prob: ${v1}% | ${amOdds > 0 ? '+' : ''}${amOdds}`;
-                } else if (reverse && v2) { // Odds to Cents
-                    let odds = parseFloat(v2);
-                    let prob = odds > 0 ? 100 / (odds + 100) : Math.abs(odds) / (Math.abs(odds) + 100);
-                    resEl.innerText = `Prob: ${(prob*100).toFixed(1)}% | ${(prob*100).toFixed(1)}¢`;
-                }
-            }
+async function loadStatus() {
+  const r = await api('/api/bot/status');
+  if (!r || !r.ok) return;
+  const s = r.data, k = s.risk || {};
 
-            if(currentCalc === 'ev') {
-                if(v1 && v2 && v3) {
-                    const wager = parseFloat(v1);
-                    const winProb = parseFloat(v2)/100;
-                    const odds = parseFloat(v3);
-                    const decimalOdds = odds > 0 ? (1 + (odds/100)) : (1 + (100/Math.abs(odds)));
-                    const ev = (wager * decimalOdds * winProb) - wager;
-                    resEl.innerText = `EV: $${ev.toFixed(2)}`;
-                    resEl.style.color = ev > 0 ? 'var(--accent)' : 'var(--danger)';
-                }
-            }
-            
-            if(currentCalc === 'vig' || currentCalc === 'novig') {
-                 if(v1 && v2) {
-                     const getProb = (o) => { o = parseFloat(o); return o > 0 ? 100/(o+100) : Math.abs(o)/(Math.abs(o)+100); };
-                     const p1 = getProb(v1);
-                     const p2 = getProb(v2);
-                     const total = p1 + p2;
-                     
-                     if(currentCalc === 'vig') {
-                         resEl.innerText = `Vig: ${((total - 1) * 100).toFixed(2)}%`;
-                     } else {
-                         const fair1 = p1 / total;
-                         const toAm = (p) => p > 0.5 ? Math.round(-100 * (p / (1-p))) : Math.round(100 * ((1-p)/p));
-                         resEl.innerText = `Fair: ${toAm(fair1)}`;
-                     }
-                 }
-            }
-        }
+  $('pState').textContent = s.state;
+  $('pState').className = 'pill ' + (s.state === 'RUNNING' ? 'run' : 'idle');
+  $('pMode').textContent = s.dry_run ? 'DRY RUN' : 'LIVE';
+  $('pMode').className = 'pill ' + (s.dry_run ? 'dry' : 'live');
+  $('pCreds').textContent = s.credentials_set ? 'KEY SET' : 'NO CREDS';
+  $('pCreds').className = 'pill ' + (s.credentials_set ? 'run' : 'idle');
 
-        window.onload = function() { loadConfig(); loadCalc('parlay'); };
-        
-        async function loadConfig() { fetchLogs(); checkStatus(); try { const res = await fetch('/api/config'); const data = await res.json(); if(data.market_keywords) document.getElementById('market_keywords').value = data.market_keywords; if(data.min_profit_pct) document.getElementById('min_profit_pct').value = data.min_profit_pct; if(data.max_bet_amount) document.getElementById('max_bet_amount').value = data.max_bet_amount; if(data.dry_run_mode === 'true') document.getElementById('dry_run_mode').checked = true; if(data.kalshi_key_id) document.getElementById('kalshi_key_id').placeholder = "******** (Saved)"; if(data.kalshi_private_key) document.getElementById('kalshi_private_key').placeholder = "******** (Saved)"; } catch(e) { console.error("Config load error", e); } }
-        async function saveStrategy() { const payload = { market_keywords: document.getElementById('market_keywords').value, min_profit_pct: document.getElementById('min_profit_pct').value, max_bet_amount: document.getElementById('max_bet_amount').value, dry_run_mode: document.getElementById('dry_run_mode').checked.toString() }; await sendConfig(payload); }
-        async function saveCreds() { const payload = { kalshi_key_id: document.getElementById('kalshi_key_id').value, kalshi_private_key: document.getElementById('kalshi_private_key').value }; await sendConfig(payload); document.getElementById('modal-creds').classList.remove('active'); }
-        async function sendConfig(payload) { for (let k in payload) if (!payload[k]) delete payload[k]; try { const res = await fetch('/api/config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); const data = await res.json(); alert(data.message); } catch(e) { alert("Save failed"); } }
-        async function toggleBot() { const btn = document.getElementById('actionBtn'); const btnText = btn.innerText.toUpperCase(); try { if(btnText.includes("INIT") || btnText.includes("OFFLINE")) { await fetch('/api/bot/start', {method:'POST'}); } else { await fetch('/api/bot/stop', {method:'POST'}); } setTimeout(checkStatus, 500); } catch(e) { alert("Command failed"); } }
-        async function checkStatus() { try { const res = await fetch('/api/bot/status'); const data = await res.json(); const btn = document.getElementById('actionBtn'); const dot = document.getElementById('dot'); const txt = document.getElementById('statusLabel'); const radar = document.getElementById('radar'); const bigTxt = document.getElementById('statusText'); if (data.status === 'RUNNING') { txt.innerText = 'ACTIVE'; txt.style.color = 'var(--accent)'; dot.classList.add('active'); radar.classList.add('active'); bigTxt.innerText = 'SCANNING KALSHI V2 API...'; btn.innerText = 'TERMINATE SYSTEM'; btn.className = 'action-btn stop'; } else { txt.innerText = 'OFFLINE'; txt.style.color = 'var(--text-muted)'; dot.classList.remove('active'); radar.classList.remove('active'); bigTxt.innerText = 'WAITING FOR COMMAND'; btn.innerText = 'INITIALIZE SYSTEM'; btn.className = 'action-btn'; } } catch(e) { console.log("Status check failed"); } }
-        async function fetchLogs() { try { const res = await fetch('/api/bot/logs'); const data = await res.json(); const logBox = document.getElementById('logBox'); if(data.logs && data.logs.length > 0) { const isScrolled = logBox.scrollHeight - logBox.clientHeight <= logBox.scrollTop + 50; logBox.innerHTML = data.logs.map(line => { let color = '#aaa'; if(line.includes("Error")) color = 'var(--danger)'; if(line.includes("Found") || line.includes("Order")) color = 'var(--accent)'; return `<div style="color:${color}">${line}</div>`; }).join(''); if(isScrolled) logBox.scrollTop = logBox.scrollHeight; parseLogsToTable(data.logs); } } catch(e) { console.log("Log error", e); } }
-        function parseLogsToTable(logs) { const markets = []; [...logs].reverse().forEach(log => { if(log.includes("Market:")) { try { const parts = log.split('|'); const tickerPart = parts[0].split(':')[1].trim(); const pricePart = parts[1].split(':')[1].replace('c','').trim(); const price = parseInt(pricePart); if(tickerPart && !isNaN(price)) { markets.push({ticker: tickerPart, price: price}); } } catch(e) { } } }); const unique = []; const seen = new Set(); markets.forEach(m => { if(!seen.has(m.ticker)) { seen.add(m.ticker); unique.push(m); } }); const table = document.getElementById('marketList'); if (unique.length > 0) { table.innerHTML = unique.map(m => ` <div class="market-row"> <div> <a href="https://kalshi.com/markets/${m.ticker}" target="_blank" class="ticker-link">${m.ticker}</a> </div> <div style="text-align:right; font-weight:bold;">${m.price}¢</div> <div style="text-align:right">-</div> <div style="text-align:right; color:var(--accent)">Calc..</div> <div style="text-align:center"><button class="buy-btn" onclick="trade('${m.ticker}')">BUY</button></div> </div> `).join(''); } const cardContainer = document.getElementById('arbCards'); if(unique.length > 0) { cardContainer.innerHTML = unique.slice(0, 8).map(m => { const impliedWin = (100 / (m.price/100)).toFixed(2); const roi = (((impliedWin - 100) / 100) * 100).toFixed(1); return ` <div class="arb-card"> <div class="arb-header">${m.ticker}</div> <div class="arb-roi">+${roi}% Pot. ROI</div> <div class="arb-stats"> <span>Price: ${m.price}¢</span> <span>Vol: High</span> </div> <div class="arb-calc"> <span>$100 Bet ➔ </span> <span style="color:#00ff88; font-weight:bold;">$${impliedWin}</span> </div> </div> `; }).join(''); } }
-        async function trade(ticker) { const btn = event.target; btn.innerText = "Wait.."; btn.disabled = true; try { const res = await fetch('/api/bot/trade', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ticker}) }); const data = await res.json(); if(data.status === 'success') { btn.innerText = "DONE"; btn.style.background = "var(--accent)"; btn.style.color = "black"; } else { btn.innerText = "ERR"; btn.style.borderColor = "var(--danger)"; alert(data.message); } setTimeout(() => { btn.innerText = "BUY"; btn.disabled = false; btn.style.background = ""; btn.style.color = ""; }, 2000); } catch(e) { btn.innerText = "ERR"; setTimeout(() => { btn.innerText = "BUY"; btn.disabled = false; }, 2000); } }
-        
-        setInterval(() => { fetchLogs(); checkStatus(); }, 2000);
-    </script>
+  const halted = !!k.halted;
+  $('pHalt').style.display = halted ? '' : 'none';
+  $('bResume').style.display = halted ? '' : 'none';
+  const b = $('banner');
+  if (halted) { b.style.display = 'block';
+    b.textContent = 'CIRCUIT BREAKER TRIPPED — ' + (k.halt_reason || '') +
+      ' Check your Kalshi positions before resetting.'; }
+  else b.style.display = 'none';
+
+  $('bStart').disabled = s.state === 'RUNNING' || halted;
+  $('bStop').disabled = s.state !== 'RUNNING';
+
+  const pnl = k.realized_pnl || 0;
+  $('stats').innerHTML = [
+    ['Realized P/L', money(pnl), pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : '')],
+    ['Open exposure', money(k.open_exposure || 0), ''],
+    ['Orders today', k.orders_today ?? 0, ''],
+    ['Wins', k.wins ?? 0, 'pos'],
+    ['Losses', k.losses ?? 0, 'neg'],
+    ['Win rate', k.win_rate == null ? '—' : k.win_rate + '%', ''],
+    ['Markets seen', s.markets_seen ?? 0, ''],
+    ['Last scan', s.last_scan_at ? s.last_scan_at.slice(11) : '—', ''],
+  ].map(([l, v, c]) =>
+    `<div class="stat"><b class="${c}">${v}</b><span>${l.toUpperCase()}</span></div>`
+  ).join('');
+}
+
+async function loadOpps() {
+  const r = await api('/api/bot/opportunities');
+  if (!r || !r.ok) return;
+  const rows = r.data.opportunities || [];
+  const tb = $('opps');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="9" class="muted">No profitable spreads after fees.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(o => `
+    <tr>
+      <td>${o.kind === 'yes_no_spread' ? 'YES/NO' : 'BASKET'}</td>
+      <td>${o.event_ticker}</td>
+      <td class="muted">${o.legs.map(l =>
+          l.side.toUpperCase() + ' ' + l.ticker + '@' + l.price_cents + 'c').join('<br>')}</td>
+      <td class="num">${o.contracts}</td>
+      <td class="num">${money(o.cost)}</td>
+      <td class="num">${money(o.fees)}</td>
+      <td class="num ${o.profit > 0 ? 'pos' : 'neg'}">${money(o.profit)}</td>
+      <td class="num ${o.profit > 0 ? 'pos' : 'neg'}">${o.profit_pct}%</td>
+      <td><button class="ghost" data-exec="${o.id}">EXECUTE</button></td>
+    </tr>`).join('');
+
+  tb.querySelectorAll('[data-exec]').forEach(btn => {
+    btn.onclick = async () => {
+      btn.disabled = true; btn.textContent = '...';
+      const r = await api('/api/bot/trade', 'POST',
+                          { opportunity_id: btn.dataset.exec });
+      toast((r && r.data.message) || 'failed', 5000);
+      loadOpps(); loadStatus(); loadTrades();
+    };
+  });
+}
+
+async function loadLogs() {
+  const r = await api('/api/bot/logs');
+  if (!r || !r.ok) return;
+  const el = $('logs');
+  const stuck = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
+  el.textContent = (r.data.logs || []).join('\n') || 'no output yet';
+  if (stuck) el.scrollTop = el.scrollHeight;
+}
+
+async function loadTrades() {
+  const r = await api('/api/trades');
+  if (!r || !r.ok) return;
+  const rows = r.data.trades || [];
+  $('trades').innerHTML = rows.length ? rows.map(t => `
+    <tr><td class="muted">${(t.created_at || '').slice(5, 16)}</td>
+      <td>${t.event_ticker}</td>
+      <td class="num">${t.contracts}</td>
+      <td class="num ${t.expected_profit_cents > 0 ? 'pos' : 'neg'}">
+        ${money((t.expected_profit_cents || 0) / 100)}</td>
+      <td>${t.dry_run ? 'DRY' : ''} ${t.status.toUpperCase()}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="muted">None.</td></tr>';
+}
+
+$('bSaveCreds').onclick = async () => {
+  const id = $('kalshi_key_id').value.trim();
+  const pem = $('kalshi_private_key').value.trim();
+  if (!id || !pem) return toast('Both fields required');
+  const r = await api('/api/config', 'POST',
+                      { kalshi_key_id: id, kalshi_private_key: pem });
+  toast(r.ok ? 'Credentials saved (encrypted)'
+             : (r.data.errors || ['failed']).join('; '), 5000);
+  if (r.ok) { $('kalshi_key_id').value = ''; $('kalshi_private_key').value = ''; }
+  loadStatus();
+};
+
+$('bSaveCfg').onclick = async () => {
+  const body = {};
+  CFG_FIELDS.forEach(k => { const v = $(k).value.trim(); if (v !== '') body[k] = v; });
+  const r = await api('/api/config', 'POST', body);
+  toast(r.ok ? 'Settings saved' : (r.data.errors || ['failed']).join('; '), 5000);
+  loadStatus();
+};
+
+$('bStart').onclick   = async () => { const r = await api('/api/bot/start','POST',{});  toast(r.data.message); loadStatus(); };
+$('bStop').onclick    = async () => { const r = await api('/api/bot/stop','POST',{});   toast(r.data.message); loadStatus(); };
+$('bResume').onclick  = async () => { const r = await api('/api/bot/resume','POST',{}); toast(r.data.message); loadStatus(); };
+$('bVerify').onclick  = async () => {
+  toast('checking...');
+  const r = await api('/api/verify_credentials','POST',{});
+  toast(r.ok ? 'Kalshi key works — account reachable'
+             : 'Key rejected: ' + (r.data.detail || 'unknown'), 6000);
+};
+
+loadConfig(); loadStatus(); loadLogs(); loadOpps(); loadTrades();
+setInterval(loadLogs, 3000);
+setInterval(loadStatus, 5000);
+setInterval(loadOpps, 7000);
+setInterval(loadTrades, 15000);
+</script>
 </body>
 </html>

@@ -1,0 +1,25 @@
+# Caddy terminates TLS and gets a real certificate automatically.
+# Set DOMAIN in .env (e.g. DOMAIN=bot.example.com).
+{$DOMAIN} {
+	encode gzip
+
+	# Throttle the login endpoint at the edge as well as in the app.
+	@login {
+		method POST
+		path /
+	}
+
+	reverse_proxy web:5000 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	log {
+		output file /data/access.log
+		level INFO
+	}
+}
