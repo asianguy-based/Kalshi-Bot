@@ -9,7 +9,7 @@ Scope: the whole repository, static review plus live Kalshi API verification.
 
 ### C1 — Kalshi API private key published to a public GitHub repo
 
-`API` and `API.txt` each contained the Kalshi key ID `7775baab-…` and the
+The files `API` and `API.txt` each contained a Kalshi key ID and the
 **complete RSA private key** in plaintext, committed 2026-02-20 and public since.
 
 Anyone who found the repo could sign requests as the account owner: read
@@ -18,7 +18,7 @@ secret scrapers index public repos continuously, so exposure should be assumed,
 not hoped against.
 
 **Remediation, in order:**
-1. **Revoke the key in Kalshi.** This is the only step that closes the hole.
+1. **Revoke the key in Kalshi.** This is the only step that closes the hole. (Confirmed still live on 2026-08-28 before revocation.)
 2. Issue a new key; enter it in the dashboard, where it is encrypted at rest.
 3. Purge history (below) and/or make the repo private.
 
