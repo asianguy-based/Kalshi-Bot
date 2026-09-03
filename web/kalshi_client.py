@@ -96,6 +96,9 @@ class KalshiClient:
     def get_market(self, ticker):
         return self._request("GET", f"/markets/{ticker}", signed=False)
 
+    def get_events(self, **params):
+        return self._request("GET", "/events", params=params, signed=False)
+
     def get_orderbook(self, ticker, depth=10):
         return self._request("GET", f"/markets/{ticker}/orderbook",
                              params={"depth": depth}, signed=False)

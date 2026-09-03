@@ -283,18 +283,41 @@ class BotManager:
     # --- scanning -------------------------------------------------------
 
     def _fetch_markets(self, client, keywords, max_pages=5):
-        markets, cursor = [], None
+        """Collect tradeable markets.
+
+        Paginated via /events with nested markets, NOT via /markets. The flat
+        /markets feed is now dominated by auto-generated KXMVECROSSCATEGORY
+        combination shards - 12,000+ of them, none with any 24h volume - so
+        the first N pages contain nothing tradeable and the real markets are
+        never reached. Enumerating events yields the actual contracts
+        (~1,600 events, ~1,300 quoted markets) in the same number of calls.
+        """
+        markets, cursor, seen = [], None, set()
         for _ in range(max_pages):
-            params = {"status": "open", "limit": 200}
+            params = {"status": "open", "limit": 200,
+                      "with_nested_markets": "true"}
             if cursor:
                 params["cursor"] = cursor
             try:
-                data = client.get_markets(**params)
+                data = client.get_events(**params)
             except Exception as exc:
-                logger.error("Market fetch failed: %s", exc)
+                logger.error("Event fetch failed: %s", exc)
                 break
-            batch = data.get("markets", [])
-            markets.extend(batch)
+            batch = data.get("events", [])
+            for ev in batch:
+                ev_ticker = ev.get("event_ticker", "")
+                # Skip the synthetic cross-category baskets outright: they
+                # are unquoted and would waste the orderbook budget.
+                if "MVECROSS" in ev_ticker:
+                    continue
+                for m in (ev.get("markets") or []):
+                    t = m.get("ticker")
+                    if not t or t in seen:
+                        continue
+                    seen.add(t)
+                    m.setdefault("event_ticker", ev_ticker)
+                    m.setdefault("title", ev.get("title", ""))
+                    markets.append(m)
             cursor = data.get("cursor")
             if not cursor or not batch:
                 break
@@ -345,6 +368,14 @@ class BotManager:
             yb, nb = market_bids_cents(m)
             if yb and nb and (100 - yb) + (100 - nb) < 104:
                 candidates.append(m)
+
+        # Only the first 60 get an orderbook lookup, so order matters: put the
+        # tightest quoted spreads first, and break ties toward the market with
+        # real 24h volume. Sorting by cost alone floods the budget with
+        # zero-volume long shots that quote 100c but cannot actually be filled.
+        candidates.sort(key=lambda m: (
+            sum(100 - b for b in market_bids_cents(m)),
+            -_to_float(m.get("volume_24h_fp") or m.get("volume") or 0)))
 
         logger.info("%d markets worth an orderbook lookup.", len(candidates))
         for m in candidates[:60]:
