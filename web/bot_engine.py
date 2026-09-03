@@ -12,6 +12,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from kalshi_client import KalshiClient, KalshiAuthError
 from arbitrage import find_yes_no_spread, find_event_basket
 from risk import risk_manager, TripWire
+from notify import notify_async, enabled as notify_enabled
 
 
 # --- Log buffer ---------------------------------------------------------
@@ -59,6 +60,8 @@ class BotManager:
         self._opp_order = deque(maxlen=50)
         self.last_scan_at = None
         self.markets_seen = 0
+        self._consecutive_scan_errors = 0
+        self.started_at = None
 
     # --- config ---------------------------------------------------------
 
@@ -137,16 +140,74 @@ class BotManager:
             if risk_manager.halted:
                 return f"Refusing to start: {risk_manager.halt_reason}"
             self.is_running = True
+            self.started_at = time.strftime("%Y-%m-%d %H:%M:%S")
+        self._consecutive_scan_errors = 0
         self._stop_event.clear()
         self.thread = threading.Thread(target=self._run_loop, daemon=True)
         self.thread.start()
+        self._set_desired_state("running")
         return "Started"
+
+    # --- unattended operation -------------------------------------------
+    #
+    # A multi-day run must survive a container restart. Without this, the
+    # process comes back up serving a dashboard with the engine IDLE, and
+    # the run silently ends at whatever hour Docker happened to restart -
+    # which is exactly the failure you would not notice for days.
+
+    def _set_desired_state(self, state):
+        """Persist whether the operator wants the engine running."""
+        try:
+            conn = sqlite3.connect(DB_NAME, timeout=10)
+            conn.execute(
+                "INSERT INTO config (key, value) VALUES ('desired_state', ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (state,))
+            conn.commit()
+            conn.close()
+        except Exception as exc:
+            logger.error("Could not persist desired_state: %s", exc)
+
+    def _desired_state(self):
+        try:
+            conn = sqlite3.connect(DB_NAME, timeout=10)
+            row = conn.execute(
+                "SELECT value FROM config WHERE key='desired_state'").fetchone()
+            conn.close()
+            return row[0] if row else "stopped"
+        except Exception as exc:
+            logger.error("Could not read desired_state: %s", exc)
+            return "stopped"
+
+    def resume_if_desired(self):
+        """Called once at process start. Restarts the engine if the operator
+        had it running when the process died, and says so out loud."""
+        if self._desired_state() != "running":
+            return False
+        if risk_manager.halted:
+            logger.error("Not auto-resuming: breaker is tripped.")
+            return False
+        cfg = self.config()
+        if not (cfg.get("kalshi_key_id") and cfg.get("kalshi_private_key")):
+            logger.warning("Auto-resume wanted, but no credentials set.")
+            return False
+        logger.info("Auto-resuming engine after restart.")
+        msg = self.start_bot()
+        notify_async(
+            "Engine auto-resumed after restart",
+            "The process restarted and the engine was brought back up "
+            "automatically, so the run continues uninterrupted.",
+            level="warning", key="auto-resume")
+        return msg == "Started"
 
     def stop_bot(self):
         with self._lock:
             if not self.is_running:
+                self._set_desired_state("stopped")
                 return "Already stopped"
             self.is_running = False
+        # Recorded before joining: an operator stop must not be undone by a
+        # restart that happens while the thread is still winding down.
+        self._set_desired_state("stopped")
         self._stop_event.set()
         if self.thread:
             self.thread.join(timeout=10)
@@ -160,6 +221,8 @@ class BotManager:
             "dry_run": cfg.get("dry_run_mode", "true") == "true",
             "credentials_set": bool(cfg.get("kalshi_key_id")
                                     and cfg.get("kalshi_private_key")),
+            "started_at": self.started_at,
+            "notifications": notify_enabled(),
             "last_scan_at": self.last_scan_at,
             "markets_seen": self.markets_seen,
             "open_opportunities": len(self._opportunities),
@@ -318,16 +381,44 @@ class BotManager:
                 if risk_manager.halted:
                     logger.error("Halted: %s. Stopping engine.",
                                  risk_manager.halt_reason)
+                    # An unattended halt is the single most important thing
+                    # to escalate: the bot has stopped trading and will not
+                    # restart itself. No throttle - this fires once, because
+                    # the loop exits immediately after.
+                    notify_async(
+                        "CIRCUIT BREAKER TRIPPED - bot stopped",
+                        f"Reason: {risk_manager.halt_reason}\n\n"
+                        "The engine has exited and will NOT resume on its "
+                        "own. Reset the breaker from the dashboard after "
+                        "checking your Kalshi positions.",
+                        level="critical", key="halt", throttle=0)
                     break
                 client = self.client()
                 if not client:
                     logger.error("Credentials not configured; engine idling.")
+                    notify_async(
+                        "Idling - no credentials configured",
+                        "The engine is running but has no Kalshi API "
+                        "credentials, so it cannot scan. Add them in the "
+                        "dashboard.",
+                        level="warning", key="no-credentials")
                     self._stop_event.wait(30)
                     continue
                 self._scan_once(client, cfg)
                 risk_manager.note_success()
+                self._consecutive_scan_errors = 0
             except Exception as exc:
                 risk_manager.note_error(exc)
+                self._consecutive_scan_errors += 1
+                # Escalate a persistent scan failure. One transient API blip
+                # is noise; a sustained outage means the run is producing no
+                # data and the operator should know before day seven.
+                if self._consecutive_scan_errors in (3, 25):
+                    notify_async(
+                        "Repeated scan failures",
+                        f"{self._consecutive_scan_errors} consecutive scan "
+                        f"errors. Most recent: {exc}",
+                        level="warning", key="scan-errors")
             self._stop_event.wait(interval)
 
         with self._lock:

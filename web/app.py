@@ -13,6 +13,8 @@ from cryptography.fernet import Fernet, InvalidToken
 import auth
 from bot_engine import bot_instance, log_buffer
 from risk import risk_manager
+from digest import daily_digest, build_digest
+from notify import notify, enabled as notify_enabled
 
 logger = logging.getLogger("KalshiBot")
 
@@ -353,12 +355,52 @@ def trades():
     return jsonify({"trades": rows, "risk": risk_manager.snapshot()})
 
 
+@app.route("/api/notify/test", methods=["POST"])
+@login_required
+def notify_test():
+    """Prove the notification path works before relying on it for days."""
+    if not notify_enabled():
+        return jsonify({
+            "status": "error",
+            "message": ("No notification transport configured. Set "
+                        "NOTIFY_WEBHOOK_URL, or the NOTIFY_SMTP_* vars, "
+                        "in .env and restart.")}), 400
+    ok = notify("Test notification",
+                "If you are reading this, alerts from your Kalshi node "
+                "are working. Circuit-breaker trips and the daily digest "
+                "will arrive the same way.",
+                level="info", key="test", throttle=0)
+    return jsonify({"status": "success" if ok else "error",
+                    "message": ("Sent." if ok else
+                                "Transport configured but the send failed - "
+                                "check the logs.")}), (200 if ok else 502)
+
+
+@app.route("/api/digest/preview")
+@login_required
+def digest_preview():
+    """See exactly what the daily digest will say, without waiting a day."""
+    title, body = build_digest()
+    return jsonify({"title": title, "body": body})
+
+
 @app.route("/healthz")
 def healthz():
     return jsonify({"ok": True})
 
 
 init_db()
+
+# Bring the engine back up if the operator had it running when this process
+# last died. Runs after init_db so the config table is guaranteed to exist.
+# Guarded because gunicorn imports this module in the worker: with -w 1 that
+# is exactly once, but an accidental scale-up must not start two engines.
+if os.environ.get("BOT_AUTORESUME", "true").lower() == "true":
+    try:
+        bot_instance.resume_if_desired()
+        daily_digest.start()
+    except Exception as exc:                       # never block serving
+        logger.error("Auto-resume failed: %s", exc)
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
