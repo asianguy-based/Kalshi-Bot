@@ -192,3 +192,55 @@ class TestAuthThrottle(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+# --- API shape migration (2026-09) -------------------------------------
+#
+# Kalshi moved to dollar-denominated STRING fields. The old integer-cent
+# fields now come back null, which made the engine silently find nothing.
+# These lock in both shapes so a future migration fails loudly instead.
+
+def test_orderbook_fp_dollar_strings_parse():
+    from arbitrage import _best_ask
+    book = {"orderbook_fp": {
+        "yes_dollars": [["0.0600", "2226.98"], ["0.0700", "3195.84"]],
+        "no_dollars": [["0.8400", "1000.00"], ["0.8800", "161.69"]]}}
+    # ask_yes crosses the best NO bid: 100 - 88 = 12
+    assert _best_ask(book, "yes") == (12, 161)
+    # ask_no crosses the best YES bid: 100 - 7 = 93
+    assert _best_ask(book, "no") == (93, 3195)
+
+
+def test_legacy_orderbook_still_parses():
+    from arbitrage import _best_ask
+    book = {"orderbook": {"yes": [[6, 100], [7, 200]], "no": [[84, 50]]}}
+    assert _best_ask(book, "yes") == (16, 50)
+    assert _best_ask(book, "no") == (93, 200)
+
+
+def test_dollar_string_rounding_is_not_truncated():
+    """float('0.07')*100 == 6.999...; int() would give 6, not 7."""
+    from arbitrage import _levels
+    book = {"orderbook_fp": {"yes_dollars": [["0.0700", "10.00"]]}}
+    assert _levels(book, "yes") == [(7, 10.0)]
+
+
+def test_empty_and_malformed_books_are_safe():
+    from arbitrage import _best_ask, _levels
+    assert _best_ask({}, "yes") is None
+    assert _best_ask({"orderbook_fp": {"yes_dollars": []}}, "no") is None
+    assert _levels({"orderbook_fp": {"yes_dollars": [["bad", "x"]]}}, "yes") == []
+
+
+def test_market_bids_prefers_dollar_fields_when_legacy_null():
+    import sys, os
+    sys.path.insert(0, os.path.dirname(__file__))
+    from bot_engine import market_bids_cents
+    # Live shape: legacy keys present but null.
+    m = {"yes_bid": None, "no_bid": None,
+         "yes_bid_dollars": "0.0400", "no_bid_dollars": "0.9500"}
+    assert market_bids_cents(m) == (4, 95)
+    # Legacy shape still honoured.
+    assert market_bids_cents({"yes_bid": 10, "no_bid": 88}) == (10, 88)
+    # Missing everything must not raise.
+    assert market_bids_cents({}) == (0, 0)

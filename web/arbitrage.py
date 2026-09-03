@@ -80,6 +80,42 @@ class Opportunity:
                 f"= {self.profit_cents:+d}c ({self.profit_pct:.2f}%)")
 
 
+def _levels(orderbook, side):
+    """Resting bid levels for a side as [(price_cents, size)], newest API
+    shape or legacy.
+
+    Kalshi now returns `orderbook_fp` with dollar-denominated STRING prices
+    ("0.8400") under `no_dollars` / `yes_dollars`, where it used to return
+    `orderbook` with integer cents under `no` / `yes`. Parsing only the
+    legacy shape yields an empty book, and an empty book silently means
+    "no opportunity" - the engine finds nothing and reports no error, which
+    is the worst kind of failure. Handle both.
+    """
+    ob = orderbook or {}
+    book = ob.get("orderbook_fp") or ob.get("orderbook") or {}
+
+    levels = book.get(f"{side}_dollars")
+    if levels:
+        out = []
+        for lv in levels:
+            try:
+                # Dollars -> cents. round() not int(): float("0.07")*100 is
+                # 6.999999999999999, and int() would truncate it to 6.
+                out.append((round(float(lv[0]) * 100), float(lv[1])))
+            except (TypeError, ValueError, IndexError):
+                continue
+        return out
+
+    legacy = book.get(side) or []
+    out = []
+    for lv in legacy:
+        try:
+            out.append((int(lv[0]), float(lv[1])))
+        except (TypeError, ValueError, IndexError):
+            continue
+    return out
+
+
 def _best_ask(orderbook, side):
     """Return (price_cents, size) of the best ask for a side, or None.
 
@@ -87,15 +123,14 @@ def _best_ask(orderbook, side):
     BUY yes is to cross the no bids: ask_yes = 100 - best_no_bid. Using the raw
     'yes' book as an ask is a classic and expensive mistake.
     """
-    book = (orderbook or {}).get("orderbook") or {}
     other = "no" if side == "yes" else "yes"
-    levels = book.get(other) or []
+    levels = _levels(orderbook, other)
     if not levels:
         return None
-    # Levels are [price, size]; the best bid on the other side is the highest.
-    best = max(levels, key=lambda lv: lv[0])
-    price, size = int(best[0]), int(best[1])
-    return 100 - price, size
+    # The best bid on the other side is the highest price.
+    price, size = max(levels, key=lambda lv: lv[0])
+    # Size is contracts; floor it, since a partial contract cannot be bought.
+    return 100 - int(price), int(size)
 
 
 def find_yes_no_spread(market_ticker, orderbook, min_profit_pct=1.0,

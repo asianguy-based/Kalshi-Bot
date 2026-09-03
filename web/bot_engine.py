@@ -47,6 +47,35 @@ DB_NAME = os.environ.get("BOT_DB_PATH", "/app/data/bot_data.db")
 SECRET_CONFIG_KEYS = ("kalshi_key_id", "kalshi_private_key")
 
 
+def _to_float(v):
+    """Kalshi returns the *_dollars and *_fp fields as STRINGS ('0.0400')."""
+    if v is None:
+        return 0.0
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def market_bids_cents(m):
+    """Best resting YES and NO bid, in whole cents.
+
+    Kalshi migrated the market payload to dollar-denominated string fields
+    (yes_bid_dollars) and now returns the legacy integer-cent fields
+    (yes_bid) as null. Reading only the legacy names makes every market look
+    unquoted, so the pre-filter selects nothing and the engine reports
+    "0 markets worth an orderbook lookup" forever - a silent no-op rather
+    than an error. Prefer the new fields, fall back to the old ones so this
+    keeps working whichever shape the API serves.
+    """
+    yb = m.get("yes_bid")
+    nb = m.get("no_bid")
+    if yb is None or nb is None:
+        yb = round(_to_float(m.get("yes_bid_dollars")) * 100)
+        nb = round(_to_float(m.get("no_bid_dollars")) * 100)
+    return int(yb or 0), int(nb or 0)
+
+
 class BotManager:
     def __init__(self):
         self.is_running = False
@@ -313,7 +342,7 @@ class BotManager:
         # so we do not hammer the API with hopeless lookups.
         candidates = []
         for m in markets:
-            yb, nb = m.get("yes_bid") or 0, m.get("no_bid") or 0
+            yb, nb = market_bids_cents(m)
             if yb and nb and (100 - yb) + (100 - nb) < 104:
                 candidates.append(m)
 
