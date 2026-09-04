@@ -119,8 +119,13 @@ class DailyDigest:
             if now.tm_hour == DIGEST_HOUR and last_sent != today:
                 try:
                     title, body = build_digest()
-                    notify(title, body, level="info",
-                           key=f"digest-{today}", throttle=0)
+                    ok = notify(title, body, level="info",
+                                key=f"digest-{today}", throttle=0)
+                    # Log the outcome either way. A silent success is
+                    # indistinguishable from a digest that never ran, which
+                    # is the exact ambiguity this feature exists to remove.
+                    logger.info("Daily digest %s: %s",
+                                "sent" if ok else "FAILED TO SEND", title)
                     last_sent = today
                 except Exception as exc:
                     logger.error("Digest failed: %s", exc)
