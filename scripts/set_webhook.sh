@@ -19,7 +19,10 @@ fi
 URL="${1:-}"
 if [ -z "$URL" ]; then
     # -s so the credential is not echoed to the terminal or scrollback.
-    read -rsp "Paste the Slack/Discord webhook URL (hidden), then Enter: " URL
+    echo "This wants your Slack/Discord WEBHOOK URL - it starts with"
+    echo "  https://hooks.slack.com/services/..."
+    echo "It is NOT your app passphrase and NOT your SSH key."
+    read -rsp "Paste the webhook URL (input hidden), then Enter: " URL
     echo
 fi
 
@@ -28,7 +31,11 @@ case "$URL" in
     https://discord.com/api/webhooks/*|https://discordapp.com/api/webhooks/*)
         LABEL="kalshi-node" ;;
     https://*) echo "Warning: not a recognised Slack/Discord webhook host." ;;
-    *) echo "That does not look like an https URL. Aborting." >&2; exit 1 ;;
+    *)
+        echo >&2
+        echo "That does not look like an https:// URL, so nothing was changed." >&2
+        echo "If you pasted a passphrase or key by mistake, rotate it to be safe." >&2
+        exit 1 ;;
 esac
 
 # Replace any existing line rather than appending a duplicate: env_file
