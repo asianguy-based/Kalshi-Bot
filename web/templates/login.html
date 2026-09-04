@@ -23,7 +23,14 @@
         .brand { display: flex; flex-direction: column; align-items: center; margin-bottom: 3rem; }
         /* Sized to match the static glyph it replaces (~76px tall), not to
            shout. The video is 256px square so it stays crisp on retina. */
-        .mark { width: 96px; height: 96px; display: block; object-fit: contain; }
+        /* The video has no alpha channel - h264/vp9 in a browser <video>
+           effectively cannot carry one. Its background is pure black, so
+           mix-blend-mode:screen makes black render as the layer beneath it:
+           screen(0, bg) == bg exactly. The result is a mathematically
+           invisible box edge, with no keying artefacts on the metal.
+           This is why the mark must sit on a plain, dark parent. */
+        .mark { width: 96px; height: 96px; display: block; object-fit: contain;
+                mix-blend-mode: screen; }
         .mark-fallback { display: none; }
         /* Respect the OS setting: show the still mark instead of a loop. */
         @media (prefers-reduced-motion: reduce) {
@@ -47,6 +54,8 @@
             <video class="mark" autoplay loop muted playsinline disablepictureinpicture
                    preload="auto" aria-hidden="true"
                    poster="{{ url_for('static', filename='brand/icon-192.png') }}">
+                <!-- Poster is the transparent PNG, so the first paint before
+                     the video decodes shows the mark, not a black square. -->
                 <source src="{{ url_for('static', filename='brand/glyph-loop.webm') }}" type="video/webm">
                 <source src="{{ url_for('static', filename='brand/glyph-loop.mp4') }}" type="video/mp4">
             </video>
