@@ -88,7 +88,8 @@ def build_digest():
           f"${run_profit/100:,.2f} expected profit"
         + "\n\nReminder: dry-run figures are a CEILING. They assume every "
           "leg would have filled at the quoted price, which real "
-          "competition does not guarantee.")
+          "competition does not guarantee."
+        + "\n\n-- The record is kept.")
     return f"Daily digest - {day_count} opportunities", body
 
 

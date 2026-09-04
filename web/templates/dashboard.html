@@ -4,19 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>KALSHI // NODE</title>
+<title>WANAX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Space+Grotesk:wght@400;500&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='wanax.css') }}">
 <style>
-  :root { --bg:#000; --panel:#0b0b0b; --line:#222; --fg:#e8e8e8;
-          --dim:#777; --good:#3ddc84; --bad:#ff4d4d; --warn:#ffb020; }
+  :root { --bg:var(--wx-black); --panel:var(--wx-black-raised); --line:var(--wx-border);
+          --fg:var(--wx-bone); --dim:var(--wx-ash); --good:var(--wx-olive);
+          --bad:var(--wx-rust); --warn:var(--wx-bronze); }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--fg);
-         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; }
+         font-family:var(--wx-font-body); font-size:13px; }
+  /* Numbers in mono so ledger columns align; prose stays in Inter. */
+  .stat b, .num, table, code, pre { font-family:var(--wx-font-data);
+         font-variant-numeric:tabular-nums; }
+  h2, .pill, button, .logout, .stat span { font-family:var(--wx-font-head); }
   header { display:flex; align-items:center; gap:16px; padding:14px 20px;
            border-bottom:1px solid var(--line); position:sticky; top:0;
            background:var(--bg); z-index:5; flex-wrap:wrap; }
-  h1 { font-size:1rem; letter-spacing:4px; margin:0; font-weight:400; }
-  .pill { padding:4px 10px; border:1px solid var(--line); border-radius:99px;
-          font-size:.72rem; letter-spacing:1px; }
+  h1 { font-family:var(--wx-font-mark); font-size:1.15rem; letter-spacing:0.4em;
+       text-transform:uppercase; margin:0; font-weight:400; color:var(--wx-bone); }
+  .brandrow { display:flex; align-items:center; gap:12px; }
+  .pill { padding:4px 10px; border:1px solid var(--line);
+          font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; }
   .pill.run { border-color:var(--good); color:var(--good); }
   .pill.idle { color:var(--dim); }
   .pill.dry { border-color:var(--warn); color:var(--warn); }
@@ -37,7 +48,8 @@
           color:var(--fg); padding:8px; font-family:inherit; font-size:12px; }
   input:focus, textarea:focus { outline:none; border-color:#555; }
   textarea { min-height:70px; resize:vertical; }
-  button { background:var(--fg); color:#000; border:none; padding:10px 16px;
+  button { background:var(--wx-bronze); color:var(--wx-black); border:none; padding:10px 16px;
+           letter-spacing:.14em; text-transform:uppercase; font-weight:600;
            font-family:inherit; font-weight:bold; letter-spacing:1px;
            cursor:pointer; font-size:12px; }
   button.ghost { background:transparent; color:var(--fg);
@@ -61,7 +73,7 @@
   .stat b { display:block; font-size:1.15rem; font-weight:500; margin-bottom:3px; }
   .stat span { color:var(--dim); font-size:.64rem; letter-spacing:1px; }
   .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
-           background:#fff; color:#000; padding:10px 18px; font-weight:bold;
+           background:var(--wx-bronze); color:var(--wx-black); padding:10px 18px; font-weight:600;
            font-size:12px; display:none; z-index:50; max-width:80vw; }
   .banner { grid-column:1 / -1; border:1px solid var(--bad); color:var(--bad);
             padding:12px; display:none; }
@@ -70,7 +82,14 @@
 </head>
 <body>
 <header>
-  <h1>KALSHI // NODE</h1>
+  <div class="brandrow">
+    <div class="wx-glyph" style="--g:.62">
+      <div class="wx-glyph__node"></div>
+      <div class="wx-glyph__stem"></div>
+      <div class="wx-glyph__record"></div>
+    </div>
+    <h1>Wanax</h1>
+  </div>
   <span class="pill idle" id="pState">IDLE</span>
   <span class="pill dry" id="pMode">DRY RUN</span>
   <span class="pill idle" id="pCreds">NO CREDS</span>

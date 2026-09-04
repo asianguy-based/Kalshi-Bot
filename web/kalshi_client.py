@@ -39,7 +39,7 @@ class KalshiClient:
         if private_key_pem:
             self._private_key = self._load_key(private_key_pem)
         self.session = requests.Session()
-        self.session.headers.update({"User-Agent": "kalshi-node/1.0"})
+        self.session.headers.update({"User-Agent": "wanax/1.0"})
 
     # --- signing ---------------------------------------------------------
 

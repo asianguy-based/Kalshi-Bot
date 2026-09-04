@@ -38,7 +38,7 @@ SMTP_USER = os.environ.get("NOTIFY_SMTP_USER", "").strip()
 SMTP_PASS = os.environ.get("NOTIFY_SMTP_PASS", "")
 EMAIL_TO = os.environ.get("NOTIFY_EMAIL_TO", "").strip()
 EMAIL_FROM = os.environ.get("NOTIFY_EMAIL_FROM", "").strip() or SMTP_USER
-LABEL = os.environ.get("NOTIFY_LABEL", "kalshi-node").strip()
+LABEL = os.environ.get("NOTIFY_LABEL", "wanax").strip()
 
 # Minimum seconds between two notifications sharing the same key.
 DEFAULT_THROTTLE = int(os.environ.get("NOTIFY_THROTTLE_SECONDS", "900") or 900)
@@ -74,7 +74,7 @@ def _post_webhook(title, body, level):
     req = urllib.request.Request(
         WEBHOOK_URL, data=payload,
         headers={"Content-Type": "application/json",
-                 "User-Agent": "kalshi-node/1.0"})
+                 "User-Agent": "wanax/1.0"})
     with urllib.request.urlopen(req, timeout=10) as resp:
         return 200 <= resp.status < 300
 

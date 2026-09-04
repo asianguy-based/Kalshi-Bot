@@ -27,9 +27,9 @@ if [ -z "$URL" ]; then
 fi
 
 case "$URL" in
-    https://hooks.slack.com/services/*) LABEL="kalshi-node" ;;
+    https://hooks.slack.com/services/*) LABEL="wanax" ;;
     https://discord.com/api/webhooks/*|https://discordapp.com/api/webhooks/*)
-        LABEL="kalshi-node" ;;
+        LABEL="wanax" ;;
     https://*) echo "Warning: not a recognised Slack/Discord webhook host." ;;
     *)
         echo >&2
@@ -45,7 +45,7 @@ trap 'rm -f "$tmp"' EXIT
 grep -v -E '^(NOTIFY_WEBHOOK_URL|NOTIFY_LABEL)=' "$ENV_FILE" > "$tmp" || true
 {
     echo "NOTIFY_WEBHOOK_URL=${URL}"
-    echo "NOTIFY_LABEL=${LABEL:-kalshi-node}"
+    echo "NOTIFY_LABEL=${LABEL:-wanax}"
 } >> "$tmp"
 cat "$tmp" > "$ENV_FILE"          # preserve mode 600 on the original
 chmod 600 "$ENV_FILE"

@@ -1,0 +1,178 @@
+/* Wanax brand system
+ * ---------------------------------------------------------------------
+ * Derived from the Wanax brand deck. The archetype is "The Administrator":
+ * a bureaucratic sovereign, not a warrior-king. Every choice here is meant
+ * to read as archaeological rather than as fintech - bronze on black,
+ * carved capitals, hard right angles.
+ *
+ * Deliberate constraints from the deck, do not "improve" them away:
+ *   - No gradients, no blues, no rounded corners. Rigid. Bureaucratic.
+ *   - Cinzel for the wordmark only (carved-in-stone), never for body text.
+ *   - IBM Plex Mono for every number, so ledgers align.
+ */
+
+:root {
+    /* Palette */
+    --wx-black: #0D0D0D;      /* primary: backgrounds */
+    --wx-bronze: #8B6914;     /* accent: logo, highlights, CTA */
+    --wx-bone: #E8E4DC;       /* surface: clay-tablet light */
+    --wx-ash: #6B6B6B;        /* secondary text, borders */
+    --wx-olive: #4A5D23;      /* success: gains, confirmations */
+    --wx-rust: #8B3A2F;       /* danger: losses, alerts */
+
+    /* Derived tones. Kept as variables so the palette stays the source
+     * of truth rather than being hardcoded at each use site. */
+    --wx-black-raised: #151515;
+    --wx-border: #262626;
+    --wx-bronze-dim: rgba(139, 105, 20, 0.18);
+    --wx-bone-dim: rgba(232, 228, 220, 0.55);
+
+    /* Type */
+    --wx-font-mark: "Cinzel", "Trajan Pro", Georgia, serif;
+    --wx-font-head: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --wx-font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --wx-font-data: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* The wordmark's defining property. 0.4em tracking per the deck. */
+    --wx-mark-tracking: 0.4em;
+}
+
+/* --- Wordmark ------------------------------------------------------- */
+
+.wx-wordmark {
+    font-family: var(--wx-font-mark);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: var(--wx-mark-tracking);
+    color: var(--wx-bone);
+    /* Tracking adds trailing space after the last glyph; pull it back so
+     * the mark reads as optically centred. */
+    text-indent: var(--wx-mark-tracking);
+    margin: 0;
+}
+
+.wx-tagline {
+    font-family: var(--wx-font-head);
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--wx-ash);
+    margin: 0.9rem 0 0;
+}
+
+/* --- Logo: the Linear B stacked glyph -------------------------------- */
+/* Square with an X (the decision node) atop a stem feeding a smaller
+ * square (the record). Pure CSS so it needs no asset pipeline and scales
+ * to any size as a single-colour mark. */
+
+.wx-glyph {
+    --g: 1;                                  /* scale multiplier */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--wx-bronze);
+}
+
+.wx-glyph__node {
+    width: calc(34px * var(--g));
+    height: calc(34px * var(--g));
+    border: calc(2px * var(--g)) solid currentColor;
+    position: relative;
+}
+
+/* The X, drawn as two rotated rules rather than an image. */
+.wx-glyph__node::before,
+.wx-glyph__node::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: calc(-1px * var(--g));
+    width: calc(100% + 2px * var(--g));
+    height: calc(2px * var(--g));
+    background: currentColor;
+}
+.wx-glyph__node::before { transform: rotate(45deg); }
+.wx-glyph__node::after  { transform: rotate(-45deg); }
+
+.wx-glyph__stem {
+    width: calc(2px * var(--g));
+    height: calc(16px * var(--g));
+    background: currentColor;
+}
+
+.wx-glyph__record {
+    width: calc(18px * var(--g));
+    height: calc(14px * var(--g));
+    border: calc(2px * var(--g)) solid currentColor;
+}
+
+/* --- Primitives ------------------------------------------------------ */
+
+.wx-body {
+    background: var(--wx-black);
+    color: var(--wx-bone);
+    font-family: var(--wx-font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.wx-h {
+    font-family: var(--wx-font-head);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+/* Every number lives in mono so columns of figures line up. */
+.wx-data,
+.wx-num {
+    font-family: var(--wx-font-data);
+    font-variant-numeric: tabular-nums;
+}
+
+.wx-card {
+    background: var(--wx-black-raised);
+    border: 1px solid var(--wx-border);
+    padding: 1.25rem;
+    /* No border-radius. The deck is explicit: only right angles. */
+}
+
+.wx-label {
+    font-family: var(--wx-font-head);
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--wx-ash);
+}
+
+.wx-btn {
+    font-family: var(--wx-font-head);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: var(--wx-bronze);
+    color: var(--wx-black);
+    border: none;
+    padding: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.wx-btn:hover { background: #A37D18; }
+.wx-btn:disabled { opacity: 0.4; cursor: wait; }
+
+.wx-gain { color: var(--wx-olive); }
+.wx-loss { color: var(--wx-rust); }
+
+.wx-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--wx-border);
+    color: var(--wx-bone);
+    font-family: var(--wx-font-data);
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    padding: 12px 4px;
+    text-align: center;
+    outline: none;
+}
+.wx-input:focus { border-bottom-color: var(--wx-bronze); }

@@ -1,4 +1,4 @@
-# Kalshi Node — invite-only arbitrage bot
+# Wanax — autonomous probability trading engine for Kalshi
 
 A single-operator web app that scans Kalshi binary markets for arbitrage that
 survives fees, and executes it behind hard risk limits.

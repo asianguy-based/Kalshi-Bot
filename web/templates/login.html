@@ -4,29 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>KALSHI // NODE</title>
+    <title>WANAX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Space+Grotesk:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='wanax.css') }}">
     <style>
-        :root { --primary: #ffffff; --bg: #000000; }
+        :root { --primary: #E8E4DC; --bg: #0D0D0D; }
         * { box-sizing: border-box; }
-        body { background: var(--bg); color: var(--primary); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; }
+        body { background: var(--wx-black); color: var(--wx-bone); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: var(--wx-font-body); overflow: hidden; }
         .card { width: 340px; text-align: center; position: relative; z-index: 10; }
-        h1 { font-size: 1.75rem; letter-spacing: 6px; margin: 0 0 3rem; font-weight: 400; }
-        input { width: 100%; background: transparent; border: none; border-bottom: 1px solid #333; color: white; padding: 12px 4px; margin-bottom: 24px; outline: none; font-family: inherit; font-size: 1rem; letter-spacing: 2px; text-align: center; }
-        input:focus { border-bottom-color: white; }
-        button { width: 100%; padding: 15px; background: white; color: black; border: none; font-weight: bold; cursor: pointer; font-family: inherit; letter-spacing: 2px; }
-        button:disabled { opacity: .4; cursor: wait; }
-        #msg { min-height: 1.2em; margin-top: 18px; font-size: .8rem; color: #ff4444; letter-spacing: 1px; }
-        #cursor-glow { position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 60%); pointer-events: none; transform: translate(-50%, -50%); transition: .1s; }
+        h1 { font-size: 2rem; margin: 1.5rem 0 0; }
+        .brand { display: flex; flex-direction: column; align-items: center; margin-bottom: 3rem; }
+        input { margin-bottom: 24px; }
+        button { width: 100%; }
+        #msg { min-height: 1.2em; margin-top: 18px; font-size: .75rem; color: var(--wx-rust); letter-spacing: .12em; font-family: var(--wx-font-head); text-transform: uppercase; }
+        /* Bronze glow, not white: the palette forbids "tech" colours. */
+        #cursor-glow { position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, var(--wx-bronze-dim), transparent 60%); pointer-events: none; transform: translate(-50%, -50%); transition: .1s; }
     </style>
 </head>
 <body>
     <div id="cursor-glow"></div>
     <div class="card">
-        <h1>KALSHI // NODE</h1>
+        <div class="brand">
+            <div class="wx-glyph" style="--g:1.1">
+                <div class="wx-glyph__node"></div>
+                <div class="wx-glyph__stem"></div>
+                <div class="wx-glyph__record"></div>
+            </div>
+            <h1 class="wx-wordmark">Wanax</h1>
+            <p class="wx-tagline">Above All Orders</p>
+        </div>
         <form id="loginForm" autocomplete="off">
-            <input type="password" id="passphrase" placeholder="KEY" required autofocus
+            <input type="password" id="passphrase" class="wx-input" placeholder="KEY" required autofocus
                    autocomplete="current-password" maxlength="256">
-            <button type="submit" id="btn">ENTER</button>
+            <button type="submit" id="btn" class="wx-btn">Enter</button>
         </form>
         <div id="msg"></div>
     </div>
@@ -46,7 +58,7 @@
             const input = document.getElementById('passphrase');
             msg.textContent = '';
             btn.disabled = true;
-            btn.textContent = 'AUTHENTICATING';
+            btn.textContent = 'Authenticating';
             try {
                 const res = await fetch('/', {
                     method: 'POST',
@@ -67,7 +79,7 @@
             input.value = '';
             input.focus();
             btn.disabled = false;
-            btn.textContent = 'ENTER';
+            btn.textContent = 'Enter';
         });
     </script>
 </body>
