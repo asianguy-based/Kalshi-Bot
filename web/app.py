@@ -4,6 +4,7 @@ import logging
 import secrets
 
 from flask import (Flask, render_template, request, redirect, url_for,
+                   send_from_directory,
                    jsonify, session)
 from flask_login import (LoginManager, UserMixin, login_user, login_required,
                          logout_user)
@@ -382,6 +383,15 @@ def digest_preview():
     """See exactly what the daily digest will say, without waiting a day."""
     title, body = build_digest()
     return jsonify({"title": title, "body": body})
+
+
+@app.route("/favicon.ico")
+def favicon():
+    """Browsers request /favicon.ico at the root regardless of the <link>
+    tags, and the logs were filling with 404s for it."""
+    return send_from_directory(
+        os.path.join(app.root_path, "static", "brand"),
+        "favicon.ico", mimetype="image/vnd.microsoft.icon")
 
 
 @app.route("/healthz")

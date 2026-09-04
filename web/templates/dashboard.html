@@ -9,6 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Space+Grotesk:wght@400;500&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='wanax.css') }}">
+<link rel="icon" href="{{ url_for('static', filename='brand/favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='brand/icon-32.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='brand/icon-180.png') }}">
+<link rel="manifest" href="{{ url_for('static', filename='brand/site.webmanifest') }}">
+<meta name="theme-color" content="#0D0D0D">
 <style>
   :root { --bg:var(--wx-black); --panel:var(--wx-black-raised); --line:var(--wx-border);
           --fg:var(--wx-bone); --dim:var(--wx-ash); --good:var(--wx-olive);

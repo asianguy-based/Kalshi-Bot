@@ -9,6 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Space+Grotesk:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='wanax.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='brand/favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='brand/icon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='brand/icon-180.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='brand/site.webmanifest') }}">
+<meta name="theme-color" content="#0D0D0D">
     <style>
         :root { --primary: #E8E4DC; --bg: #0D0D0D; }
         * { box-sizing: border-box; }
@@ -16,6 +21,15 @@
         .card { width: 340px; text-align: center; position: relative; z-index: 10; }
         h1 { font-size: 2rem; margin: 1.5rem 0 0; }
         .brand { display: flex; flex-direction: column; align-items: center; margin-bottom: 3rem; }
+        /* Sized to match the static glyph it replaces (~76px tall), not to
+           shout. The video is 256px square so it stays crisp on retina. */
+        .mark { width: 96px; height: 96px; display: block; object-fit: contain; }
+        .mark-fallback { display: none; }
+        /* Respect the OS setting: show the still mark instead of a loop. */
+        @media (prefers-reduced-motion: reduce) {
+            .mark { display: none; }
+            .mark-fallback { display: flex; }
+        }
         input { margin-bottom: 24px; }
         button { width: 100%; }
         #msg { min-height: 1.2em; margin-top: 18px; font-size: .75rem; color: var(--wx-rust); letter-spacing: .12em; font-family: var(--wx-font-head); text-transform: uppercase; }
@@ -27,7 +41,16 @@
     <div id="cursor-glow"></div>
     <div class="card">
         <div class="brand">
-            <div class="wx-glyph" style="--g:1.1">
+            <!-- Rotating bronze glyph. The CSS glyph stays as the fallback:
+                 if the video cannot play (or the visitor prefers reduced
+                 motion) the mark is still there, just still. -->
+            <video class="mark" autoplay loop muted playsinline disablepictureinpicture
+                   preload="auto" aria-hidden="true"
+                   poster="{{ url_for('static', filename='brand/icon-192.png') }}">
+                <source src="{{ url_for('static', filename='brand/glyph-loop.webm') }}" type="video/webm">
+                <source src="{{ url_for('static', filename='brand/glyph-loop.mp4') }}" type="video/mp4">
+            </video>
+            <div class="wx-glyph mark-fallback" style="--g:1.1" aria-hidden="true">
                 <div class="wx-glyph__node"></div>
                 <div class="wx-glyph__stem"></div>
                 <div class="wx-glyph__record"></div>
@@ -43,6 +66,19 @@
         <div id="msg"></div>
     </div>
     <script>
+        // If the loop cannot decode (codec, blocked autoplay, slow link),
+        // fall back to the static CSS mark rather than an empty gap.
+        (function () {
+            const v = document.querySelector('.mark');
+            const still = document.querySelector('.mark-fallback');
+            if (!v || !still) return;
+            const useStill = () => { v.style.display = 'none'; still.style.display = 'flex'; };
+            v.addEventListener('error', useStill);
+            v.addEventListener('stalled', useStill);
+            // Autoplay can be refused silently; check that it actually moved.
+            setTimeout(() => { if (v.readyState < 2 || v.paused) useStill(); }, 2500);
+        })();
+
         document.addEventListener('mousemove', e => {
             const g = document.getElementById('cursor-glow');
             g.style.left = e.clientX + 'px';

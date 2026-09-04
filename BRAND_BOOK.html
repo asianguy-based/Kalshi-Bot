@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wanax — Brand Book</title>
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Space+Grotesk:wght@400;500&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/wanax.css">
+<style>
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+  body { margin:0; background:var(--wx-black); color:var(--wx-bone);
+         font-family:var(--wx-font-body); line-height:1.65; }
+
+  /* Each slide is a full viewport panel that snaps, so this reads as a
+     deck on screen and paginates cleanly when printed to PDF. */
+  .slide { min-height:100vh; scroll-snap-align:start; display:flex;
+           flex-direction:column; justify-content:center;
+           padding:6vh 7vw; position:relative; border-bottom:1px solid var(--wx-border); }
+  .num { position:absolute; top:4vh; right:7vw; font-family:var(--wx-font-data);
+         font-size:.7rem; color:var(--wx-ash); letter-spacing:.2em; }
+  .kicker { font-family:var(--wx-font-head); font-size:.68rem; letter-spacing:.24em;
+            text-transform:uppercase; color:var(--wx-bronze); margin:0 0 1.4rem; }
+  h2 { font-family:var(--wx-font-head); font-weight:500; font-size:clamp(1.5rem,3.4vw,2.6rem);
+       letter-spacing:-.015em; margin:0 0 1.6rem; max-width:22ch; }
+  p { max-width:64ch; margin:0 0 1rem; }
+  .lede { font-size:clamp(1rem,1.5vw,1.2rem); color:var(--wx-bone); }
+  .dim { color:var(--wx-ash); }
+  strong { color:var(--wx-bone); font-weight:500; }
+  code { font-family:var(--wx-font-data); font-size:.86em; color:var(--wx-bronze); }
+
+  table { border-collapse:collapse; width:100%; max-width:900px; margin:.6rem 0 1rem;
+          font-size:.92rem; }
+  th,td { text-align:left; padding:.6rem .9rem; border-bottom:1px solid var(--wx-border);
+          vertical-align:top; }
+  th { font-family:var(--wx-font-head); font-size:.64rem; letter-spacing:.18em;
+       text-transform:uppercase; color:var(--wx-ash); font-weight:500; }
+  td:first-child { font-family:var(--wx-font-head); color:var(--wx-bone); white-space:nowrap; }
+  td.mono, .mono { font-family:var(--wx-font-data); }
+
+  .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+          gap:1.5rem; max-width:1000px; }
+
+  /* Cover */
+  .cover { align-items:center; text-align:center; justify-content:center; }
+  .cover video, .cover img.mark { width:min(180px,34vw); height:auto; display:block; margin:0 auto; }
+  .cover h1 { font-family:var(--wx-font-mark); font-weight:400; text-transform:uppercase;
+              letter-spacing:.4em; text-indent:.4em; font-size:clamp(2rem,7vw,4.5rem);
+              margin:2.4rem 0 .8rem; }
+  .cover .tag { font-family:var(--wx-font-head); letter-spacing:.28em; text-transform:uppercase;
+                font-size:clamp(.62rem,1.3vw,.82rem); color:var(--wx-bronze); margin:0; }
+  .cover .meta { margin-top:3.5rem; font-family:var(--wx-font-data); font-size:.7rem;
+                 color:var(--wx-ash); letter-spacing:.12em; }
+
+  /* Swatches */
+  .swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+              gap:1rem; max-width:1000px; }
+  .sw { border:1px solid var(--wx-border); }
+  .sw .chip { height:88px; }
+  .sw .body { padding:.7rem .8rem; }
+  .sw .nm { font-family:var(--wx-font-head); font-size:.8rem; }
+  .sw .hx { font-family:var(--wx-font-data); font-size:.72rem; color:var(--wx-ash); }
+  .sw .use { font-size:.72rem; color:var(--wx-ash); margin-top:.3rem; }
+
+  /* Type specimens */
+  .spec { border-left:2px solid var(--wx-bronze); padding-left:1.1rem; margin-bottom:1.6rem; }
+  .spec .lbl { font-family:var(--wx-font-head); font-size:.62rem; letter-spacing:.18em;
+               text-transform:uppercase; color:var(--wx-ash); margin-bottom:.45rem; }
+  .s-mark { font-family:var(--wx-font-mark); text-transform:uppercase; letter-spacing:.4em;
+            font-size:1.7rem; }
+  .s-head { font-family:var(--wx-font-head); font-size:1.5rem; font-weight:500; }
+  .s-body { font-family:var(--wx-font-body); font-size:1rem; }
+  .s-data { font-family:var(--wx-font-data); font-size:1.15rem; }
+
+  /* Logo anatomy */
+  .anatomy { display:flex; gap:3.5rem; align-items:center; flex-wrap:wrap; }
+  .anatomy img { width:min(200px,40vw); }
+  .rules li { margin-bottom:.55rem; }
+  ul { padding-left:1.1rem; max-width:60ch; }
+
+  .quote { font-family:var(--wx-font-head); font-size:clamp(1.15rem,2.4vw,1.75rem);
+           line-height:1.45; max-width:34ch; border-left:2px solid var(--wx-bronze);
+           padding-left:1.4rem; }
+  .gain { color:var(--wx-olive); } .loss { color:var(--wx-rust); }
+  .note { border:1px solid var(--wx-border); background:var(--wx-black-raised);
+          padding:1rem 1.15rem; max-width:70ch; font-size:.88rem; }
+  .note b { color:var(--wx-bronze); font-weight:500; }
+
+  @media print {
+    html { scroll-snap-type:none; }
+    .slide { min-height:auto; page-break-after:always; border:none; padding:8mm 10mm; }
+    body { background:#0D0D0D !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 01 COVER -->
+<section class="slide cover">
+  <video autoplay loop muted playsinline preload="auto" poster="assets/icon-512.png">
+    <source src="assets/glyph-loop.webm" type="video/webm">
+    <source src="assets/glyph-loop.mp4" type="video/mp4">
+  </video>
+  <h1>Wanax</h1>
+  <p class="tag">Above All Orders</p>
+  <p class="meta">BRAND BOOK · v1.0 · SEPTEMBER 2026</p>
+</section>
+
+<!-- 02 THE NAME -->
+<section class="slide">
+  <span class="num">02</span>
+  <p class="kicker">The Name</p>
+  <h2>A title, not a tool.</h2>
+  <p class="lede"><strong>Wanax</strong> — Mycenaean Greek, Linear B <em>wa-na-ka</em>.
+     Pronounced <span class="mono">/ˈwɑː.nɒks/</span> — WAH-noks.</p>
+  <table>
+    <tr><th>Attribute</th><th>Detail</th></tr>
+    <tr><td>Literal meaning</td><td>The highest ruler in Bronze Age palace society — above all other elites</td></tr>
+    <tr><td>Root</td><td>Non-Indo-European (pre-Greek) — older than the Greek language itself</td></tr>
+    <tr><td>Descendant</td><td><em>Anax</em> (Homeric) = "lord, master" — the word behind <em>anarchy</em> (no anax)</td></tr>
+    <tr><td>Role</td><td>Controlled land, labour, trade, military and religious administration at once</td></tr>
+    <tr><td>Key distinction</td><td>Not a warrior-king. A <strong>bureaucratic sovereign</strong> — power through systems, not force</td></tr>
+  </table>
+  <p class="dim">The wanax did not <em>fight</em> the market. He <strong>administered</strong> it —
+     allocated resources, tracked obligations, kept the record. That is what an algorithm does.</p>
+</section>
+
+<!-- 03 POSITIONING -->
+<section class="slide">
+  <span class="num">03</span>
+  <p class="kicker">Positioning</p>
+  <h2>Archetype: The Administrator.</h2>
+  <p class="lede dim">The one who controls the system from inside.</p>
+  <table>
+    <tr><th>Trait</th><th>Expression</th></tr>
+    <tr><td>Secretive</td><td>A Bronze Age term. You would have to study Linear B to know it.</td></tr>
+    <tr><td>Elite</td><td>Not "king." The thing <em>above</em> king — the apex of the palace hierarchy.</td></tr>
+    <tr><td>Disciplined</td><td>A record-keeper and resource allocator. Not a hero. An <strong>operator</strong>.</td></tr>
+    <tr><td>Distinguishable</td><td>No trading bot, quant fund or fintech uses this name. Zero.</td></tr>
+    <tr><td>Memorable</td><td>Five letters. Hard consonants (W, X). Unmistakable.</td></tr>
+  </table>
+  <div class="note"><b>Tone of voice.</b> Cold. Administrative. The name of a function, not a
+     person — like saying "The System" or "The Office." State what was done and what is true.
+     Never sell. Never pad.</div>
+</section>
+
+<!-- 04 LOGO -->
+<section class="slide">
+  <span class="num">04</span>
+  <p class="kicker">The Mark</p>
+  <h2>A tablet glyph, not a logo.</h2>
+  <div class="anatomy">
+    <img src="assets/logo-glyph.png" alt="Wanax glyph">
+    <div>
+      <ul class="rules">
+        <li>A square containing an <strong>X</strong> — the <strong>decision node</strong>, the point where the position is taken.</li>
+        <li>A <strong>stem</strong> — the chain of command flowing downward.</li>
+        <li>A smaller square — <strong>the record</strong>, the tablet on which authority was written.</li>
+        <li><strong>No curves.</strong> Right angles and diagonals only. Rigid. Bureaucratic.</li>
+        <li>Single colour at any size. Reads as a seal, or a stamp of authority.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note"><b>Implementation.</b> The mark exists three ways: as
+     <span class="mono">web/static/wanax.css</span> (<span class="mono">.wx-glyph</span>) in pure
+     CSS with no asset pipeline; as a transparent PNG for favicons and export; and as a rotating
+     bronze loop used on the login screen. Bronze on black is primary; bone on black is the alternate.</div>
+</section>
+
+<!-- 05 COLOUR -->
+<section class="slide">
+  <span class="num">05</span>
+  <p class="kicker">Colour</p>
+  <h2>Archaeological, not fintech.</h2>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#0D0D0D;border-bottom:1px solid #262626"></div>
+      <div class="body"><div class="nm">Deep Black</div><div class="hx">#0D0D0D</div><div class="use">Primary · backgrounds</div></div></div>
+    <div class="sw"><div class="chip" style="background:#8B6914"></div>
+      <div class="body"><div class="nm">Bronze</div><div class="hx">#8B6914</div><div class="use">Accent · logo, CTA</div></div></div>
+    <div class="sw"><div class="chip" style="background:#E8E4DC"></div>
+      <div class="body"><div class="nm">Bone / Tablet</div><div class="hx">#E8E4DC</div><div class="use">Surface · text on dark</div></div></div>
+    <div class="sw"><div class="chip" style="background:#6B6B6B"></div>
+      <div class="body"><div class="nm">Ash</div><div class="hx">#6B6B6B</div><div class="use">Secondary · borders</div></div></div>
+    <div class="sw"><div class="chip" style="background:#4A5D23"></div>
+      <div class="body"><div class="nm">Olive</div><div class="hx">#4A5D23</div><div class="use">Success · <span class="gain">gains</span></div></div></div>
+    <div class="sw"><div class="chip" style="background:#8B3A2F"></div>
+      <div class="body"><div class="nm">Rust</div><div class="hx">#8B3A2F</div><div class="use">Danger · <span class="loss">losses</span></div></div></div>
+  </div>
+  <p class="dim" style="margin-top:1.4rem">Mood: a tablet pulled from a palace archive.
+     <strong>No gradients. No blues. No "tech" colours.</strong></p>
+</section>
+
+<!-- 06 TYPE -->
+<section class="slide">
+  <span class="num">06</span>
+  <p class="kicker">Typography</p>
+  <h2>Carved, then computed.</h2>
+  <div class="cols">
+    <div>
+      <div class="spec"><div class="lbl">Wordmark · Cinzel · 0.4em tracking</div><div class="s-mark">Wanax</div></div>
+      <div class="spec"><div class="lbl">Headings · Space Grotesk Medium</div><div class="s-head">The edge is allocated.</div></div>
+    </div>
+    <div>
+      <div class="spec"><div class="lbl">Body · Inter · 16 / 1.6</div><div class="s-body">The position is taken. The record is kept.</div></div>
+      <div class="spec"><div class="lbl">Data · IBM Plex Mono · tabular</div>
+        <div class="s-data">+$1,284.00<br>&nbsp;&nbsp;&nbsp;−$412.75</div></div>
+    </div>
+  </div>
+  <div class="note"><b>Two rules.</b> Cinzel is for the wordmark only — never body text.
+     Every number renders in IBM Plex Mono with tabular figures, so columns of figures align
+     like a ledger. That is the archetype doing real work, not decoration.</div>
+</section>
+
+<!-- 07 VOICE -->
+<section class="slide">
+  <span class="num">07</span>
+  <p class="kicker">Voice</p>
+  <h2>Taglines.</h2>
+  <table>
+    <tr><th>Option</th><th>Reading</th></tr>
+    <tr><td><strong style="color:var(--wx-bronze)">Above All Orders. ✦</strong></td><td>Selected. A double entendre: above every other order in the book, and above all other officials.</td></tr>
+    <tr><td>The System Rules.</td><td>Cold, authoritative — implies the bot <em>is</em> the system</td></tr>
+    <tr><td>Administrated Edge.</td><td>Ties the bureaucratic nature to trading</td></tr>
+    <tr><td>The Palace Computes.</td><td>Bronze Age palace meets algorithmic computation</td></tr>
+    <tr><td>Wanax. The First Ruler.</td><td>Emphasises pre-Greek, primordial authority</td></tr>
+  </table>
+  <p class="quote">Wanax is an autonomous probability trading engine for Kalshi. It doesn't
+     predict. It administers. The edge is allocated. The position is taken. The record is kept.</p>
+</section>
+
+<!-- 08 DIFFERENTIATION -->
+<section class="slide">
+  <span class="num">08</span>
+  <p class="kicker">Differentiation</p>
+  <h2>Everything else sounds like 2019.</h2>
+  <table>
+    <tr><th>Typical name</th><th>Problem</th><th>Wanax</th></tr>
+    <tr><td>AlphaBot, QuantX, TradeAI</td><td class="dim">Generic, dated</td><td>A 3,500-year-old title for the highest ruler</td></tr>
+    <tr><td>ProfitPilot, MoneyMule</td><td class="dim">Desperate, loud</td><td>Cold, administrative, no desperation</td></tr>
+    <tr><td>NeuralTrade, DeepSignal</td><td class="dim">Jargon, interchangeable</td><td>No jargon. A name that predates the alphabet</td></tr>
+  </table>
+  <p class="lede">Wanax does not sound like a <em>tool</em>. It sounds like a <strong>title</strong>.
+     You don't "use Wanax." You <em>are</em> the Wanax.</p>
+</section>
+
+<!-- 09 APPLICATION -->
+<section class="slide">
+  <span class="num">09</span>
+  <p class="kicker">Application</p>
+  <h2>Shipped, not proposed.</h2>
+  <table>
+    <tr><th>Surface</th><th>State</th></tr>
+    <tr><td>Login</td><td>Wordmark, tagline, and the rotating bronze glyph — with a static CSS fallback for reduced-motion and failed autoplay</td></tr>
+    <tr><td>Dashboard</td><td>Glyph + wordmark header; mono tabular figures; square-cornered status pills; bronze controls</td></tr>
+    <tr><td>Favicon</td><td>Full set — 16/32/48 use the node only, because the full glyph is illegible at tab size</td></tr>
+    <tr><td>Notifications</td><td>Slack digest signs off <span class="mono">The record is kept.</span></td></tr>
+    <tr><td>Domain</td><td><span class="mono">wanax.app</span> — live at <span class="mono">bot.wanax.app</span></td></tr>
+  </table>
+  <div class="note"><b>Single source of truth.</b>
+     <span class="mono">web/static/wanax.css</span> holds the palette tokens and primitives.
+     Use <span class="mono">--wx-bronze</span> and <span class="mono">.wx-card</span> rather than
+     re-typing hex codes, so the next page inherits the brand instead of approximating it.</div>
+</section>
+
+<!-- 10 RISK -->
+<section class="slide">
+  <span class="num">10</span>
+  <p class="kicker">Risk</p>
+  <h2>Clean enough to proceed.</h2>
+  <table>
+    <tr><th>Risk</th><th>Severity</th><th>Position</th></tr>
+    <tr><td>Wanax Ltd (Cyprus) holds a mark in advertising / business services</td><td class="dim">Low</td><td>Different Nice class from finance and trading. No direct conflict.</td></tr>
+    <tr><td>Small businesses using "Wanax"</td><td class="dim">Low</td><td>None in finance or trading. Geographic separation.</td></tr>
+    <tr><td>Known in Linear B academic circles</td><td class="dim">Negligible</td><td>That is the point — obscure to the public, real to those who know.</td></tr>
+    <tr><td>Possible mispronunciation</td><td class="dim">Low</td><td>WAH-noks is intuitive; the X ending makes it stick.</td></tr>
+  </table>
+  <div class="note"><b>Honest caveat.</b> A different trademark class is
+     <em>clean enough to proceed</em> — it is not a clearance. If Wanax becomes a product sold to
+     others rather than an engine run privately, that is worth twenty minutes with an attorney
+     before the name goes on a contract.</div>
+</section>
+
+<section class="slide cover">
+  <div class="wx-glyph" style="--g:1.5">
+    <div class="wx-glyph__node"></div><div class="wx-glyph__stem"></div><div class="wx-glyph__record"></div>
+  </div>
+  <p class="tag" style="margin-top:2.5rem">The record is kept.</p>
+</section>
+
+</body>
+</html>
